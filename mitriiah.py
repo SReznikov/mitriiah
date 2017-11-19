@@ -302,7 +302,7 @@ class SelectedResiduesListWindow(QtGui.QListWidget):
 
 
         for val in selected_residues:
-            res_item = QtGui.QListWidgetItem("resval: %s resname: %s " "atomname: %s " "atomval: %s " % (val['resval'], val['resname'], val['atomname'], val['atomval']))
+            res_item = QtGui.QListWidgetItem("Residue: %s" "  %s " "   Atom: %s " "  %s " % (val['resval'], val['resname'], val['atomname'], val['atomval']))
             res_item.my_res_atom = {'resval': val['resval'], 'atomval': val['atomval']}
 
             current_line = res_item.my_res_atom
