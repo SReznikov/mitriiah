@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 import sys
+import os
 import argparse
 
 from PyQt4 import QtCore, QtGui
@@ -9,11 +12,25 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 
 
+choices=["*.xvg","*.txt","*.gro"]
+
+def CheckExt(choices):
+    class Act(argparse.Action):
+        def __call__(self,parser,namespace,fname,option_string=None):
+            ext = os.path.splitext(fname)[1][1:]
+            if ext not in choices:
+                option_string = '({})'.format(option_string) if option_string else ''
+                parser.error("file doesn't end with one of {}{}".format(choices,option_string))
+            else:
+                setattr(namespace,self.dest,fname)
+
+    return Act
+
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-r", "--rmsf", dest = 'rmsf_filename', default = "rmsf.xvg", help="rmsf file")
-parser.add_argument("-c", "--coords", dest = 'my_gro_filename', default = "protein.gro", help=".gro file used for rmsf")
+parser.add_argument("-r", "--rmsf", dest = 'rmsf_filename', default = "rmsf.xvg", help="rmsf file", action=CheckExt({'xvg','txt'}))
+parser.add_argument("-c", "--coords", dest = 'my_gro_filename', default = "protein.gro", help=".gro file used for rmsf", action=CheckExt({'gro'}))
 
 args = parser.parse_args()
 
@@ -164,8 +181,55 @@ class GraphWindow(QtGui.QDialog):
 
         self.setWindowTitle('RMSF plot')
 
+        self.main()
+  
+
+        # # a figure instance to plot on
+        # self.figure = Figure(figsize = (5,4))
+
+        # # this is the Canvas Widget that displays the `figure`
+        # # it takes the `figure` instance as a parameter to __init__
+        # self.canvas = FigureCanvas(self.figure)
+
+
+        # # this is the Navigation widget
+        # # it takes the Canvas widget and a parent
+        # self.toolbar = NavigationToolbar(self.canvas, self)
+
+        # # def HelperArea(self):
+            
+        # button1 =  QtGui.QPushButton("One")
+        #     # button1.setGeometry(10, 10, 20, 20)
+
+        # # self.helper = HelperArea(self)
+
+        
+        # # set the layout
+        # layout = QtGui.QVBoxLayout()
+        # layout.addWidget(self.toolbar)
+        # layout.addWidget(self.canvas)
+        # # layout.addWidget(self.helper)
+        # layout.addWidget(button1)
+        # self.setLayout(layout)
+
+        # # plot the rmsf.xvg
+
+        # # create an axis
+        # ax = self.figure.add_subplot(111)
+        # self.ax = ax
+
+        # # use the selecter on graph
+        # cid = self.figure.canvas.mpl_connect('button_press_event', add_point_by_mouse)
+
+        self.redraw_graph()
+
+    # def HelperArea(self):
+    #     button1 =  QtGui.QPushButton("One")
+
+
+    def main(self):
         # a figure instance to plot on
-        self.figure = Figure()
+        self.figure = Figure(figsize = (5,4))
 
         # this is the Canvas Widget that displays the `figure`
         # it takes the `figure` instance as a parameter to __init__
@@ -176,11 +240,20 @@ class GraphWindow(QtGui.QDialog):
         # it takes the Canvas widget and a parent
         self.toolbar = NavigationToolbar(self.canvas, self)
 
+        # def HelperArea(self):
+            
+        button1 =  QtGui.QPushButton("One")
+        button1.setGeometry(10, 10, 20, 20)
+
+        # self.helper = HelperArea(self)
+
         
         # set the layout
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
+        # layout.addWidget(self.helper)
+        layout.addWidget(button1)
         self.setLayout(layout)
 
         # plot the rmsf.xvg
@@ -189,14 +262,8 @@ class GraphWindow(QtGui.QDialog):
         ax = self.figure.add_subplot(111)
         self.ax = ax
 
-        ax.set_title("RMSF")    
-        ax.set_xlabel('Residue number')
-        ax.set_ylabel('rmsf (nm)')
-
         # use the selecter on graph
         cid = self.figure.canvas.mpl_connect('button_press_event', add_point_by_mouse)
-
-        self.redraw_graph()
 
 
 
@@ -222,6 +289,7 @@ class GraphWindow(QtGui.QDialog):
 
     def keyPressEvent(self, event):
 
+
         super(GraphWindow, self).keyPressEvent(event)
 
         if event.key() == QtCore.Qt.Key_P:
@@ -229,6 +297,16 @@ class GraphWindow(QtGui.QDialog):
             print('Saved atom list from Graph-Window')
 
             saving_and_output()
+
+        if event.key() == QtCore.Qt.Key_Q:
+            
+            print('Hamster ran out!')
+
+            app.quit()
+
+    def closeEvent(self, event):
+        app.quit()
+
 
 
 
@@ -276,6 +354,12 @@ class SelectedPointsListWindow(QtGui.QListWidget):
             print('Saved atom list from selction window')
 
             saving_and_output()
+
+        if event.key() == QtCore.Qt.Key_Q:
+            
+            print('Hamster ran out!')
+
+            app.quit()
 
 
 # def gruppe(d):                                  # function for sorting the itemlist
@@ -360,6 +444,12 @@ class SelectedResiduesListWindow(QtGui.QListWidget):
             print('Saved atom list from atom selection window')
 
             saving_and_output()
+
+        if event.key() == QtCore.Qt.Key_Q:
+            
+            print('Hamster ran out!')
+
+            app.quit()
 
 
 
