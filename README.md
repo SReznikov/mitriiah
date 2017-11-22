@@ -1,17 +1,19 @@
 # mitriiah
 
-Prerequisites:
+### Prerequisites:
 
 PyQt4
 matplotlib
 
-Running:
+### Running:
 
 To run, the rmsf file along with the corresponding .gro file, are required and are specified with the -r and -c flags respecively e.g :
 
-mitriiah.py -r rmsf.xvg -c protein.gro
+```bash
+./mitriiah.py -r rmsf.xvg -c protein.gro
+```
 
-Usage:
+### Usage:
 
 To select residues with the lowest rmsf, right click on the graph in the area you want the selection. The lowest point within the click will be added to the selected residues list/window.
 
@@ -21,7 +23,7 @@ In order to select desired atoms to be outputted as an index, select the atom in
 
 To output the atom seletionspress 'p'. A new .ndx file containing only the group of selected atoms will also be created. You can copy and paste the contents to your already existing index file. 
 
-Quick Guide:
+### Quick Guide:
 
 'delete key' - delete the selected residue (use in the selections window)
 'v' - add currently selected atom to your atoms list
@@ -29,7 +31,7 @@ Quick Guide:
 'p' - output all your selections into a .ndx file and print the list in the terminal
 
 
-To do list:
+### To do list:
 
 - Fix the zoom function (currently resets the view once a point is chosen on the graph)
 - add rectangle selector for conveniance
