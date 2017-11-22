@@ -157,18 +157,16 @@ def add_point_by_mouse(event):
 
 
         # add selected points to the window list
-        win2.clear()
+        win2_layout.SelectedPointsList_object.clear()
         for point in selected_points:
             list_item = QtGui.QListWidgetItem("res: %d rmsf: %s" % (point['x'], point['y']))
             list_item.my_point = point # keep 'point' info for reference
               
-            win2.addItem( list_item )
-
-          
+            win2_layout.SelectedPointsList_object.addItem( list_item )
 
 
 
-        win3.redraw_res_list()
+        win2_layout.SelectedResiduesList_object.redraw_res_list()
         win1.redraw_graph()
 
         # add the selected lowest point to the list of selected points
@@ -183,48 +181,7 @@ class GraphWindow(QtGui.QDialog):
 
         self.main()
   
-
-        # # a figure instance to plot on
-        # self.figure = Figure(figsize = (5,4))
-
-        # # this is the Canvas Widget that displays the `figure`
-        # # it takes the `figure` instance as a parameter to __init__
-        # self.canvas = FigureCanvas(self.figure)
-
-
-        # # this is the Navigation widget
-        # # it takes the Canvas widget and a parent
-        # self.toolbar = NavigationToolbar(self.canvas, self)
-
-        # # def HelperArea(self):
-            
-        # button1 =  QtGui.QPushButton("One")
-        #     # button1.setGeometry(10, 10, 20, 20)
-
-        # # self.helper = HelperArea(self)
-
-        
-        # # set the layout
-        # layout = QtGui.QVBoxLayout()
-        # layout.addWidget(self.toolbar)
-        # layout.addWidget(self.canvas)
-        # # layout.addWidget(self.helper)
-        # layout.addWidget(button1)
-        # self.setLayout(layout)
-
-        # # plot the rmsf.xvg
-
-        # # create an axis
-        # ax = self.figure.add_subplot(111)
-        # self.ax = ax
-
-        # # use the selecter on graph
-        # cid = self.figure.canvas.mpl_connect('button_press_event', add_point_by_mouse)
-
         self.redraw_graph()
-
-    # def HelperArea(self):
-    #     button1 =  QtGui.QPushButton("One")
 
 
     def main(self):
@@ -308,12 +265,42 @@ class GraphWindow(QtGui.QDialog):
         app.quit()
 
 
+class SelectedPointsLayoutWindow(QtGui.QWidget):
+    def __init__(self):
+        super(SelectedPointsLayoutWindow, self).__init__()
+
+        # instantiate the listwidget
+        SelectedPointsList_object = SelectedPointsList(selected_points)
+        self.SelectedPointsList_object = SelectedPointsList_object
+
+        SelectedResiduesList_object = SelectedResiduesList(selected_residues)
+        self.SelectedResiduesList_object = SelectedResiduesList_object
 
 
 
-class SelectedPointsListWindow(QtGui.QListWidget):
+        sel_point_layout = SelectedPointsList_object
+        button_a =  QtGui.QPushButton("One")
+        button_b =  QtGui.QPushButton("2")
+        button_c =  QtGui.QPushButton("3")
+
+
+
+        # set the layout
+        sel_point_layout = QtGui.QGridLayout()
+        sel_point_layout.addWidget(SelectedPointsList_object, 0, 0, 1, 1)
+        sel_point_layout.addWidget(button_a, 0, 1)
+        sel_point_layout.addWidget(button_b, 1, 0)
+        sel_point_layout.addWidget(button_c, 2, 1)
+        sel_point_layout.addWidget(SelectedResiduesList_object, 3, 0, 5, 2)
+        self.setLayout(sel_point_layout)
+
+
+
+
+
+class SelectedPointsList(QtGui.QListWidget):
     def __init__(self, selected_points):
-        super(SelectedPointsListWindow, self).__init__()
+        super(SelectedPointsList, self).__init__()
 
         self.setWindowTitle('Selected Points')
     
@@ -323,7 +310,7 @@ class SelectedPointsListWindow(QtGui.QListWidget):
 
         global selected_residues
 
-        super(SelectedPointsListWindow, self).keyPressEvent(event)
+        super(SelectedPointsList, self).keyPressEvent(event)
         # https://stackoverflow.com/questions/38507011/implementing-keypressevent-in-qwidget
         if event.key() == QtCore.Qt.Key_Delete:
             for item in self.selectedItems():
@@ -347,7 +334,7 @@ class SelectedPointsListWindow(QtGui.QListWidget):
                 self.takeItem(self.row(item)) # delete the row visually
 
         win1.redraw_graph()
-        win3.redraw_res_list()
+        win2_layout.SelectedResiduesList_object.redraw_res_list()
 
         if event.key() == QtCore.Qt.Key_P:
             
@@ -367,9 +354,9 @@ class SelectedPointsListWindow(QtGui.QListWidget):
 
 
 
-class SelectedResiduesListWindow(QtGui.QListWidget):
+class SelectedResiduesList(QtGui.QListWidget):
     def __init__(self, selected_residues):
-        super(SelectedResiduesListWindow, self).__init__()
+        super(SelectedResiduesList, self).__init__()
 
         self.setWindowTitle('Selected Residues and atom selection')
 
@@ -414,7 +401,7 @@ class SelectedResiduesListWindow(QtGui.QListWidget):
 
 
 
-        super(SelectedResiduesListWindow, self).keyPressEvent(event)
+        super(SelectedResiduesList, self).keyPressEvent(event)
         
         # add desired atoms to atom_val_list
         if event.key() == QtCore.Qt.Key_V:
@@ -464,17 +451,11 @@ win1.show()
 win1.raise_()
 
 
-win2 = SelectedPointsListWindow(selected_points)
-win2.move(870, 60)
-win2.resize(300, 150)
-win2.show()
-win2.raise_()
-
-win3 = SelectedResiduesListWindow(selected_residues)
-win3.move(870, 250)
-win3.resize(490, 480)
-win3.show()
-win3.raise_()
+win2_layout = SelectedPointsLayoutWindow()
+win2_layout.move(870, 60)
+win2_layout.resize(900, 1000)
+win2_layout.show()
+win2_layout.raise_()
 
 
 sys.exit(app.exec_())
