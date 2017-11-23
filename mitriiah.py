@@ -12,8 +12,9 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 
 
-choices=["*.xvg","*.txt","*.gro"]
+choices=["*.xvg","*.txt","*.gro"] # accepted file extensions
 
+# check if the file has an accepted extension
 def CheckExt(choices):
     class Act(argparse.Action):
         def __call__(self,parser,namespace,fname,option_string=None):
@@ -40,21 +41,21 @@ args = parser.parse_args()
 x_a_res, y_a_rmsf = [], [] 
 
 # List of selected points
-selected_points = []
+selected_points = [] # residue value and rmsf value from graph selection
 
-selected_points_x = []
-selected_points_y = []
+selected_points_x = [] # residue value
+selected_points_y = [] # rmsf value
 
 # List of values from gro_file
 gro_residue_val, gro_residue_name, gro_atom_name, gro_atom_number = [], [], [], []
 
-selected_residues = []
+selected_residues = [] # residue name+value and atom name+value derived from selected_points
 
-atom_val_list = []
+atom_val_list = [] # list of atom numbers obtained from user selection
 
 
 
-# Open the rmsf.xvg file
+# Open the rmsf.xvg file and assign residue and rmsf variables
 with open(args.rmsf_filename) as rmsf:
 
     rmsf_lines = [line.strip() for line in rmsf if not line.startswith(('#', '@'))]
@@ -67,13 +68,12 @@ with open(args.rmsf_filename) as rmsf:
             x_a_res.append(float(cols[0]))
             y_a_rmsf.append(float(cols[1]))
 
-
+# Open the given .gro file and assign needed variables (residue/atom values and names)
 with open(args.my_gro_filename) as gro_file:
 
     for line in gro_file:
         
         cols = line.split()
-
 
         if len(cols) == 9:
             res_col = cols[0]
@@ -91,12 +91,15 @@ with open(args.my_gro_filename) as gro_file:
             gro_atom_name.append(str(cols[1]))
             gro_atom_number.append(int(cols[2]))
 
-
+# save the chosen atom numbers to a new .ndx file. Also prints the values in the terminal. 
 def saving_and_output():
     atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
     print('[your_chosen_atoms]')
     print(atom_val_list_out)
+    main_window.reply_log_object.append("[your_chosen_atoms]")
+    main_window.reply_log_object.append(atom_val_list_out)
+
     with open("sel_atoms_index.ndx", 'wt') as out:
         out.write( "[ chosen_atoms ]" + '\n')
         out.write( '\n' )
@@ -104,23 +107,23 @@ def saving_and_output():
 
 
 
-# Points selection on graph
+# Points selection on graph:
 def add_point_by_mouse(event):
 
     global selected_points
     global selected_residues
 
-    if event.button == 3:
+    if event.button == 3: # right mouse button (1 = LMB, 2 = wheel, 3 = RMB)
 
         if event.xdata == None:
             return
 
-        mx_l = event.xdata - 5
+        mx_l = event.xdata - 5 # 5 residues either side from where the mouse was clicked to consider for lowest rmsf
         mx_h = event.xdata + 5
-        lowest_point = None # lowest y value
+        lowest_point = None # lowest rmsf value 
         x_of_lowest_point = None
 
-        # print('you pressed', event.button, event.xdata, mx_l, mx_h)
+        # check if point is within range, set lowest point. 
         for index, curr_point in enumerate(x_a_res):
             if curr_point > mx_l and curr_point < mx_h: # is it within the range?
                 
@@ -132,47 +135,43 @@ def add_point_by_mouse(event):
                     lowest_point = y_a_rmsf[index]
                     x_of_lowest_point = x_a_res[index]
 
-        # add the selected lowest point to the list of selected points
-    
+        # add the selected lowest point to the list of selected points   
         if not [point for point in selected_points if point['x'] == x_of_lowest_point]:
-            if x_of_lowest_point != None and lowest_point != None:
-                selected_points.append({"x":x_of_lowest_point, "y":lowest_point})
+            if x_of_lowest_point != None and lowest_point != None: 
+                selected_points.append({"x":x_of_lowest_point, "y":lowest_point}) # add our lowest point to list of selected points only if residue number isn't already present in the list
                 selected_points = sorted(selected_points, key=lambda item: item["x"])
 
+                # for every added point, add corresponding data from .gro file:
+                for index, select_res in enumerate(gro_residue_val):
+                    if select_res == x_of_lowest_point: # check if residue number of our point is in .gro and add other variables to the list
 
-        for index, select_res in enumerate(gro_residue_val):
-            if select_res == x_of_lowest_point:
-
-                selected_residues.append(
-                    {
-                        "resval":gro_residue_val[index], 
-                        "resname":gro_residue_name[index], 
-                        "atomname":gro_atom_name[index], 
-                        "atomval":gro_atom_number[index]
-                    }
-                )
-                selected_residues = sorted(selected_residues, key=lambda item: item["atomval"])
-                
+                        selected_residues.append(
+                            {
+                                "resval":gro_residue_val[index], 
+                                "resname":gro_residue_name[index], 
+                                "atomname":gro_atom_name[index], 
+                                "atomval":gro_atom_number[index]
+                            }
+                        )
+                        selected_residues = sorted(selected_residues, key=lambda item: item["atomval"])
+                    
 
 
-
-        # add selected points to the window list
-        win2_layout.SelectedPointsList_object.clear()
+        # add selected_points (residue value and rmsf value) to the selected_points_list (also displayed)
+        main_window.selected_points_list_object.clear()
         for point in selected_points:
             list_item = QtGui.QListWidgetItem("res: %d rmsf: %s" % (point['x'], point['y']))
             list_item.my_point = point # keep 'point' info for reference
               
-            win2_layout.SelectedPointsList_object.addItem( list_item )
+            main_window.selected_points_list_object.addItem( list_item ) # add visually line by line
 
 
-
-        win2_layout.SelectedResiduesList_object.redraw_res_list()
-        win1.redraw_graph()
-
-        # add the selected lowest point to the list of selected points
+        #refresh the list display
+        main_window.selected_residues_list_object.redraw_res_list() 
+        main_window.graph_object.redraw_graph()
     
 
-
+# Space in which the rmsf figure is drawn
 class GraphWindow(QtGui.QDialog):
     def __init__(self, x_a_res, y_a_rmsf):
         super(GraphWindow, self).__init__()
@@ -183,37 +182,23 @@ class GraphWindow(QtGui.QDialog):
   
         self.redraw_graph()
 
-
+    # set the drawing space
     def main(self):
         # a figure instance to plot on
         self.figure = Figure(figsize = (5,4))
 
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
+        # this is the Canvas Widget that displays the `figure`. it takes the `figure` instance as a parameter to __init__
         self.canvas = FigureCanvas(self.figure)
 
-
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
+        # this is the Navigation widget. it takes the Canvas widget and a parent
         self.toolbar = NavigationToolbar(self.canvas, self)
-
-        # def HelperArea(self):
-            
-        button1 =  QtGui.QPushButton("One")
-        button1.setGeometry(10, 10, 20, 20)
-
-        # self.helper = HelperArea(self)
-
         
         # set the layout
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
-        # layout.addWidget(self.helper)
-        layout.addWidget(button1)
-        self.setLayout(layout)
 
-        # plot the rmsf.xvg
+        self.setLayout(layout)
 
         # create an axis
         ax = self.figure.add_subplot(111)
@@ -223,14 +208,12 @@ class GraphWindow(QtGui.QDialog):
         cid = self.figure.canvas.mpl_connect('button_press_event', add_point_by_mouse)
 
 
-
+    # plot the graph
     def redraw_graph(self):
 
-        # discards the old graph
-        self.ax.clear()
+        self.ax.clear() # discards the old graph
 
-        # plot the rmsf graph
-        self.ax.plot(x_a_res,y_a_rmsf, c='k')
+        self.ax.plot(x_a_res,y_a_rmsf, c='k') # plot the rmsf graph
 
         # plot every selected point
         for point in selected_points:
@@ -243,61 +226,230 @@ class GraphWindow(QtGui.QDialog):
         # refresh canvas
         self.canvas.draw()
 
-
+    # define the keyboard shortcuts
     def keyPressEvent(self, event):
-
 
         super(GraphWindow, self).keyPressEvent(event)
 
+        # atom output shortcut
         if event.key() == QtCore.Qt.Key_P:
             
             print('Saved atom list from Graph-Window')
+            main_window.reply_log_object.append("Saved atom list from Graph-Window")
 
             saving_and_output()
 
+        # quit the program shortcut
         if event.key() == QtCore.Qt.Key_Q:
             
             print('Hamster ran out!')
 
             app.quit()
 
+    # close down all open windows when this one is closed -- is it needed??
     def closeEvent(self, event):
         app.quit()
 
 
-class SelectedPointsLayoutWindow(QtGui.QWidget):
+
+class ReplyLog(QtGui.QTextEdit):
     def __init__(self):
-        super(SelectedPointsLayoutWindow, self).__init__()
+        super(ReplyLog, self).__init__()
 
-        # instantiate the listwidget
-        SelectedPointsList_object = SelectedPointsList(selected_points)
-        self.SelectedPointsList_object = SelectedPointsList_object
-
-        SelectedResiduesList_object = SelectedResiduesList(selected_residues)
-        self.SelectedResiduesList_object = SelectedResiduesList_object
+        self.append(" Hamster log:")
+        self.setReadOnly(True)
 
 
+# The window which contains everything - layouts included
+class MainGuiWindow(QtGui.QWidget):
+    def __init__(self):
+        super(MainGuiWindow, self).__init__()
 
-        sel_point_layout = SelectedPointsList_object
-        button_a =  QtGui.QPushButton("One")
-        button_b =  QtGui.QPushButton("2")
-        button_c =  QtGui.QPushButton("3")
+        # instantiate the required objects
+
+        graph_object = GraphWindow(x_a_res, y_a_rmsf)
+        self.graph_object = graph_object
+
+        selected_points_list_object = SelectedPointsList(selected_points)
+        self.selected_points_list_object = selected_points_list_object
+
+        selected_residues_list_object = SelectedResiduesList(selected_residues)
+        self.selected_residues_list_object = selected_residues_list_object
+
+        reply_log_object = ReplyLog()
+        self.reply_log_object = reply_log_object
+
+
+        self.range_selection()
+        self.default_atom_selection()
+        self.layouts()
 
 
 
-        # set the layout
+        
+    # gui responsible for residue range selections.
+    def range_selection(self):
+            
+        self.select_button = QtGui.QPushButton("Select")
+        self.select_button.setFixedWidth(80)
+
+        self.select_button.clicked.connect(self.range_button_clicked)
+
+
+    def range_button_clicked(self):
+        from_input = self.from_res.text()
+        to_input = self.to_res.text()
+
+        res_range = list(range(int(from_input), int(to_input) + 1))
+
+        print(res_range)
+        self.reply_log_object.append("residues range:")
+        self.reply_log_object.append(str(res_range))
+
+    # gui responsible for default atom selection
+    # def default_atoms(self):
+
+    #     global selected_residues
+    #     global atom_val_list
+
+    #     # add default atoms to atom_val_list
+
+    #     default_atoms = "CA"
+
+    #     for val in selected_residues:
+            
+    #         if val["atomname"] == default_atoms:
+            
+    #             item.setTextColor(QtGui.QColor("red")) 
+
+    #             if not [point for point in atom_val_list if point == item.my_res_atom['atomval']]:
+    #                     atom_val_list.append( item.my_res_atom['atomval'] )
+    #                     atom_val_list = sorted(atom_val_list, key=lambda item: item)
+
+
+
+
+    def default_atom_selection(self):
+            
+        self.default_atoms_button =  QtGui.QPushButton("Select")
+        self.default_atoms_button.setFixedWidth(80)
+
+        self.default_atoms_button.clicked.connect(self.default_button_clicked)
+
+    def default_button_clicked(self):
+        global selected_residues
+        global atom_val_list
+
+        # add default atoms to atom_val_list
+
+        self.default_atoms = "CA"
+
+        self.reply_log_object.append(self.default_atoms)
+
+        for item in selected_residues:
+            # select automatically all defaults
+            if item["atomname"] == self.default_atoms:
+                self.reply_log_object.append(str(item))
+                # val.setTextColor(QtGui.QColor("red")) 
+
+                if not [point for point in atom_val_list if point == item['atomval']]:
+                        atom_val_list.append( item['atomval'] )
+                        atom_val_list = sorted(atom_val_list, key=lambda item: item)
+
+        # print(res_range)
+        # self.print_window.append("residues range:")
+        # self.print_window.append(str(res_range))
+        main_window.selected_residues_list_object.redraw_res_list()
+
+    # layout of the entire window
+    def layouts(self):
+
+        # residue range selection gui items:
+        self.from_res =  QtGui.QLineEdit()
+        self.from_res.setFixedWidth(50)
+            
+        self.to_label =  QtGui.QLabel(" to ")
+        self.to_label.setFixedWidth(30)
+
+        self.to_res =  QtGui.QLineEdit()
+        self.to_res.setFixedWidth(50)
+
+        # object labels
+        sel_point_label =  QtGui.QLabel("Selection of residues:")
+        sel_res_label =  QtGui.QLabel("Selection of atoms:")
+        range_sel_label =  QtGui.QLabel("Select a range of residues:")
+
+
+        # helper section
+        button_d =  QtGui.QPushButton("4")
+
+        help_info = QtGui.QLabel("Shortcuts: 'v' - select atoms ; 'b' - deselect atoms ; 'del' - delete selected residues ; 'p' - print selected atom numbers")
+
+        # labelling for default atom selection
+        default_atoms_label = QtGui.QLabel("Default atoms:")
+        default_atoms_info = QtGui.QLabel("CA, N, O, C, ")
+        # default_atoms_button =  QtGui.QPushButton("Select")
+
+
+        
+        # containers
+
+        # helper bar (below graph)
+        helper_bar = QtGui.QGridLayout()
+        helper_bar.addWidget(button_d, 0,0)
+        helper_bar.addWidget(help_info, 1, 0)
+        helper_bar.addWidget(self.reply_log_object, 2, 0)
+
+
+        # graph window
+        graph_window_layout = QtGui.QVBoxLayout()
+        graph_window_layout.addWidget(self.graph_object)
+        graph_window_layout.addLayout(helper_bar)
+
+
+
+        #selection of residues/points window
+        points_window_layout = QtGui.QVBoxLayout()
+        points_window_layout.addWidget(sel_point_label)
+        points_window_layout.addWidget(self.selected_points_list_object)
+
+        # selection of atoms window
+        atoms_window_layout = QtGui.QVBoxLayout()
+        atoms_window_layout.addWidget(sel_res_label)
+        atoms_window_layout.addWidget(self.selected_residues_list_object)
+
+
+
+        # range of residues gui
+        range_layout_opt = QtGui.QHBoxLayout()
+        range_layout_opt.addWidget(self.from_res)
+        range_layout_opt.addWidget(self.to_label)
+        range_layout_opt.addWidget(self.to_res)
+        range_layout_opt.addWidget(self.select_button)
+
+        # default atom gui + range of residues gui
+        range_layout = QtGui.QVBoxLayout()
+        range_layout.addWidget(default_atoms_label)
+        range_layout.addWidget(default_atoms_info)
+        range_layout.addWidget(self.default_atoms_button)
+        range_layout.addWidget(range_sel_label)
+        range_layout.addLayout(range_layout_opt)
+
+
+        # set the main layout
         sel_point_layout = QtGui.QGridLayout()
-        sel_point_layout.addWidget(SelectedPointsList_object, 0, 0, 1, 1)
-        sel_point_layout.addWidget(button_a, 0, 1)
-        sel_point_layout.addWidget(button_b, 1, 0)
-        sel_point_layout.addWidget(button_c, 2, 1)
-        sel_point_layout.addWidget(SelectedResiduesList_object, 3, 0, 5, 2)
+
+        sel_point_layout.addLayout(graph_window_layout, 0,0,6,6)
+        sel_point_layout.addLayout(points_window_layout, 0, 6, 3, 2)
+        sel_point_layout.addLayout(range_layout, 2, 8, 1, 2)
+        sel_point_layout.addLayout(atoms_window_layout, 3, 6, 6, 4)
+        
+
         self.setLayout(sel_point_layout)
 
 
 
-
-
+# object containing the selected points list
 class SelectedPointsList(QtGui.QListWidget):
     def __init__(self, selected_points):
         super(SelectedPointsList, self).__init__()
@@ -315,8 +467,6 @@ class SelectedPointsList(QtGui.QListWidget):
         if event.key() == QtCore.Qt.Key_Delete:
             for item in self.selectedItems():
 
-
-
                 # update the selected points list when deleting
                 for index, point in enumerate(selected_points):
                     if( point['x'] == item.my_point['x']):
@@ -324,6 +474,7 @@ class SelectedPointsList(QtGui.QListWidget):
 
 
                 temp_res_list = []
+
                 # update the selected residues list when deleting
                 for index, vals in enumerate(selected_residues):
                     if (vals['resval'] != item.my_point['x']):
@@ -333,15 +484,18 @@ class SelectedPointsList(QtGui.QListWidget):
                 selected_residues = temp_res_list
                 self.takeItem(self.row(item)) # delete the row visually
 
-        win1.redraw_graph()
-        win2_layout.SelectedResiduesList_object.redraw_res_list()
+        main_window.graph_object.redraw_graph()
+        main_window.selected_residues_list_object.redraw_res_list()
 
+        # atom numbers printing and saving shortcut
         if event.key() == QtCore.Qt.Key_P:
             
             print('Saved atom list from selction window')
+            main_window.reply_log_object.append("Saved atom list from selection window")
 
             saving_and_output()
 
+        # quit the program shortcut
         if event.key() == QtCore.Qt.Key_Q:
             
             print('Hamster ran out!')
@@ -349,11 +503,7 @@ class SelectedPointsList(QtGui.QListWidget):
             app.quit()
 
 
-# def gruppe(d):                                  # function for sorting the itemlist
-#     return str(d['resval'])
-
-
-
+# object responsible for handling gro vars list (the selected residues list)
 class SelectedResiduesList(QtGui.QListWidget):
     def __init__(self, selected_residues):
         super(SelectedResiduesList, self).__init__()
@@ -362,14 +512,11 @@ class SelectedResiduesList(QtGui.QListWidget):
 
         self.redraw_res_list()
 
-#working script
+    # populate the list window and keep it updated
     def redraw_res_list(self):
         self.clear()
         
         last_line = {'resval': None}
-
-        # if last_line['resval'] != current_line['resval']:
-        #     self.addItem(line_break)
 
 
         for val in selected_residues:
@@ -392,18 +539,15 @@ class SelectedResiduesList(QtGui.QListWidget):
             self.addItem( res_item )
 
 
-
-
+    # define keyboard actions
     def keyPressEvent(self, event):
 
         global selected_residues
         global atom_val_list
 
-
-
         super(SelectedResiduesList, self).keyPressEvent(event)
         
-        # add desired atoms to atom_val_list
+        # add desired atoms to atom_val_list by pressing 'v'
         if event.key() == QtCore.Qt.Key_V:
             
             for item in self.selectedItems():
@@ -415,7 +559,7 @@ class SelectedResiduesList(QtGui.QListWidget):
                     atom_val_list = sorted(atom_val_list, key=lambda item: item)
 
 
-        # delete desired atoms from the atom list
+        # delete desired atoms from the atom list by pressing 'b'
         if event.key() == QtCore.Qt.Key_B:
             for item in self.selectedItems():
 
@@ -426,12 +570,15 @@ class SelectedResiduesList(QtGui.QListWidget):
                     if( atm == item.my_res_atom['atomval']):
                         del atom_val_list[index]
 
+        # print and save the atom values by pressing 'p'
         if event.key() == QtCore.Qt.Key_P:
             
             print('Saved atom list from atom selection window')
+            main_window.reply_log_object.append("Saved atom list from atom selection window")
 
             saving_and_output()
 
+        # quit the program by pressing 'q'
         if event.key() == QtCore.Qt.Key_Q:
             
             print('Hamster ran out!')
@@ -440,22 +587,13 @@ class SelectedResiduesList(QtGui.QListWidget):
 
 
 
-
 app = QtGui.QApplication(sys.argv)
 
-
-win1 = GraphWindow(x_a_res, y_a_rmsf)
-win1.move(50, 20)
-win1.resize(800, 600)
-win1.show()
-win1.raise_()
-
-
-win2_layout = SelectedPointsLayoutWindow()
-win2_layout.move(870, 60)
-win2_layout.resize(900, 1000)
-win2_layout.show()
-win2_layout.raise_()
+main_window = MainGuiWindow()
+main_window.move(50, 60)
+main_window.resize(1500, 1000)
+main_window.show()
+main_window.raise_()
 
 
 sys.exit(app.exec_())
