@@ -53,7 +53,8 @@ selected_residues = [] # residue name+value and atom name+value derived from sel
 
 atom_val_list = [] # list of atom numbers obtained from user selection
 
-
+selected_range = []
+temp_atom_val_list = [] # merge this to atom_val_list when the ranges are working
 
 # Open the rmsf.xvg file and assign residue and rmsf variables
 with open(args.rmsf_filename) as rmsf:
@@ -281,6 +282,7 @@ class MainGuiWindow(QtGui.QWidget):
 
 
         self.range_selection()
+        self.atom_selection()
         self.default_atom_selection()
         self.layouts()
 
@@ -297,15 +299,83 @@ class MainGuiWindow(QtGui.QWidget):
 
 
     def range_button_clicked(self):
+        global selected_range
         from_input = self.from_res.text()
         to_input = self.to_res.text()
 
         res_range = list(range(int(from_input), int(to_input) + 1))
 
+        # selected_range = []
+
         print(res_range)
+
         self.reply_log_object.append("residues range:")
         self.reply_log_object.append(str(res_range))
 
+        for i in res_range:
+            num = i
+            # print(num)
+            for index, select_res in enumerate(gro_residue_val):
+                # print("ok")
+                if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
+                    selected_range.append(
+                        {
+                            "resval":gro_residue_val[index], 
+                            "resname":gro_residue_name[index], 
+                            "atomname":gro_atom_name[index], 
+                            "atomval":gro_atom_number[index]
+                        }
+                    )
+            selected_range = sorted(selected_range, key=lambda item: item["atomval"])
+
+            # print(selected_range) 
+
+    def atom_selection(self):
+            
+        self.select_atm_button = QtGui.QPushButton("Submit")
+        self.select_atm_button.setFixedWidth(80)
+
+        self.select_atm_button.clicked.connect(self.atom_button_clicked) 
+
+    def atom_button_clicked(self):
+            global selected_range
+            # selected_range = main_window.range_button_clicked.selected_range
+            global temp_atom_val_list
+            # print('here is the range')
+            # print(selected_range)
+            # l = 1
+            # while l == 1 :
+            atom_input = self.atm_nam.text()
+                # # print(atom_input)
+                # for index, select_atom in enumerate(selected_range):
+                #     print(select_atom["atomname"])
+                #     if select_atom["atomname"] == atom_input:
+                #         selected_atoms.append(
+                #             {
+                #                 "resval":gro_residue_val[index], 
+                #                 "resname":gro_residue_name[index], 
+                #                 "atomname":gro_atom_name[index], 
+                #                 "atomval":gro_atom_number[index]
+                #             }
+                #         )
+
+            for item in selected_range:
+                    # select automatically all defaults
+                if item["atomname"] == atom_input:
+                    if not [point for point in temp_atom_val_list if point == item['atomval']]:
+                                temp_atom_val_list.append( item['atomval'])
+                                temp_atom_val_list = sorted(temp_atom_val_list, key=lambda item: item)
+                        # print(atom_input)
+                        # print(selected_atoms)
+                    # if atom_input == "q":
+                        # l = 0
+            print(str(atom_input))
+
+            temp_atom_val_list_out = (' '.join(str(e) for e in temp_atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+            print('[your_chosen_atoms]')
+            print(temp_atom_val_list_out)
+#################################################
     # gui responsible for default atom selection
     # def default_atoms(self):
 
@@ -374,6 +444,9 @@ class MainGuiWindow(QtGui.QWidget):
         self.to_res =  QtGui.QLineEdit()
         self.to_res.setFixedWidth(50)
 
+        self.atm_nam =  QtGui.QLineEdit()
+        self.atm_nam.setFixedWidth(50)
+
         # object labels
         sel_point_label =  QtGui.QLabel("Selection of residues:")
         sel_res_label =  QtGui.QLabel("Selection of atoms:")
@@ -426,6 +499,8 @@ class MainGuiWindow(QtGui.QWidget):
         range_layout_opt.addWidget(self.to_label)
         range_layout_opt.addWidget(self.to_res)
         range_layout_opt.addWidget(self.select_button)
+        range_layout_opt.addWidget(self.atm_nam)
+        range_layout_opt.addWidget(self.select_atm_button)
 
         # default atom gui + range of residues gui
         range_layout = QtGui.QVBoxLayout()
@@ -461,6 +536,8 @@ class SelectedPointsList(QtGui.QListWidget):
     def keyPressEvent(self, event):
 
         global selected_residues
+        global atom_val_list
+
 
         super(SelectedPointsList, self).keyPressEvent(event)
         # https://stackoverflow.com/questions/38507011/implementing-keypressevent-in-qwidget
@@ -483,6 +560,16 @@ class SelectedPointsList(QtGui.QListWidget):
                     
                 selected_residues = temp_res_list
                 self.takeItem(self.row(item)) # delete the row visually
+
+                # clear corresponding atoms out of memory
+                temp_atom_list = []
+                for index, atom in enumerate(atom_val_list):
+                    for val in selected_residues:
+                        
+                        if atom == val['atomval']:
+                            temp_atom_list.append(atom_val_list[index])
+
+                atom_val_list = temp_atom_list
 
         main_window.graph_object.redraw_graph()
         main_window.selected_residues_list_object.redraw_res_list()
@@ -515,6 +602,8 @@ class SelectedResiduesList(QtGui.QListWidget):
     # populate the list window and keep it updated
     def redraw_res_list(self):
         self.clear()
+
+        global atom_val_list
         
         last_line = {'resval': None}
 
@@ -535,6 +624,15 @@ class SelectedResiduesList(QtGui.QListWidget):
                 self.addItem(line_break)
                 self.addItem(line_title)
             last_line = current_line
+
+
+            for item in atom_val_list:
+                if item == val['atomval']:
+
+                    brush = QtGui.QBrush()
+                    brush.setColor(QtGui.QColor('red')) 
+                    res_item.setForeground(brush)
+
 
             self.addItem( res_item )
 

@@ -38,11 +38,11 @@ To output the atom seletionspress 'p'. A new .ndx file containing only the group
 
 Priority
 
+- fix ranges functionality (show output in 'hamster log', deleting atoms from list, merging the temp.var to the current working var, putting restrictions on values entered, approperiate labelling and placement in the program)
+
 - selection of default/desired atom all at once in the list
 - generation of posres.itp along with .ndx files
-- incorporation of ranges.py into the program
 - fix column selection
-- fix atom highlighting
 
 
 Nice to have
@@ -65,8 +65,6 @@ Maybe will get there one day
 - Atom window not showing results. This is if the number of columns in the .gro file is less than 9; sometimes this is the case pre-simulation. In the script need to change the column number to be maching the amount in the gro file.
 
 - For large systems the atom name and atom number lose space separation. The program will not be able to separate this into two columns and will not work. To fix this a space has to be added between the two merged columns. This can be done relatively quickly in a text editor like emacs or sublime.
-
-- When an atom is selected (shows up in red), and another point on the graph is selected, the atom selections will disappear. This is only a VISUAL bug. 
 
 
 # ranges
