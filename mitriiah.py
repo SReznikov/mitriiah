@@ -75,7 +75,7 @@ with open(args.my_gro_filename) as gro_file:
         
         cols = line.split()
 
-        if len(cols) == 9:
+        if len(cols) == 9: #number of cols in gro file. will depend if pre or post sim (6 or 9 cols)
             res_col = cols[0]
 
             match = re.match(r"([0-9]+)([a-zA-Z]+)", res_col, re.I)
