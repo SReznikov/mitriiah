@@ -53,7 +53,7 @@ selected_residues = [] # residue name+value and atom name+value derived from sel
 
 atom_val_list = [] # list of atom numbers obtained from user selection
 
-selected_range = []
+selected_range = [] # range of residues selected, contains resval, resname, atomval atom name
 temp_atom_val_list = [] # merge this to atom_val_list when the ranges are working
 
 # Open the rmsf.xvg file and assign residue and rmsf variables
@@ -283,6 +283,7 @@ class MainGuiWindow(QtGui.QWidget):
 
         self.range_selection()
         self.atom_selection()
+        self.atom_deletion()
         self.default_atom_selection()
         self.layouts()
 
@@ -300,10 +301,24 @@ class MainGuiWindow(QtGui.QWidget):
 
     def range_button_clicked(self):
         global selected_range
+        global gro_residue_val
         from_input = self.from_res.text()
         to_input = self.to_res.text()
 
-        res_range = list(range(int(from_input), int(to_input) + 1))
+        min_res = min(gro_residue_val)
+        max_res = max(gro_residue_val)
+
+        print(min_res)
+        print(max_res)
+
+
+        if (int(from_input)) < min_res or (int(to_input)) > max_res:
+
+        # if (int(from_input)) <= min_res:
+            print("number entered out of bounds")
+
+        else:
+            res_range = list(range(int(from_input), int(to_input) + 1))
 
         # selected_range = []
 
@@ -337,67 +352,74 @@ class MainGuiWindow(QtGui.QWidget):
 
         self.select_atm_button.clicked.connect(self.atom_button_clicked) 
 
+    def atom_deletion(self):
+            
+        self.delete_atm_button = QtGui.QPushButton("Delete")
+        self.delete_atm_button.setFixedWidth(80)
+
+        self.delete_atm_button.clicked.connect(self.atom_deletion_clicked)
+
     def atom_button_clicked(self):
             global selected_range
-            # selected_range = main_window.range_button_clicked.selected_range
             global temp_atom_val_list
-            # print('here is the range')
-            # print(selected_range)
-            # l = 1
-            # while l == 1 :
+            current_atoms = []
+           
             atom_input = self.atm_nam.text()
-                # # print(atom_input)
-                # for index, select_atom in enumerate(selected_range):
-                #     print(select_atom["atomname"])
-                #     if select_atom["atomname"] == atom_input:
-                #         selected_atoms.append(
-                #             {
-                #                 "resval":gro_residue_val[index], 
-                #                 "resname":gro_residue_name[index], 
-                #                 "atomname":gro_atom_name[index], 
-                #                 "atomval":gro_atom_number[index]
-                #             }
-                #         )
-
+                      
+            
             for item in selected_range:
-                    # select automatically all defaults
                 if item["atomname"] == atom_input:
                     if not [point for point in temp_atom_val_list if point == item['atomval']]:
                                 temp_atom_val_list.append( item['atomval'])
                                 temp_atom_val_list = sorted(temp_atom_val_list, key=lambda item: item)
-                        # print(atom_input)
-                        # print(selected_atoms)
-                    # if atom_input == "q":
-                        # l = 0
-            print(str(atom_input))
+                                current_atoms.append( item['atomval'])
+                                current_atoms = sorted(current_atoms, key=lambda item: item)
+                
 
             temp_atom_val_list_out = (' '.join(str(e) for e in temp_atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-
+            print('chosen atoms:')
+            print(str(atom_input))
+            print(current_atoms)
             print('[your_chosen_atoms]')
             print(temp_atom_val_list_out)
-#################################################
-    # gui responsible for default atom selection
-    # def default_atoms(self):
 
-    #     global selected_residues
-    #     global atom_val_list
+            self.reply_log_object.append("chosen atoms:")
+            self.reply_log_object.append(str(atom_input))
+            self.reply_log_object.append(str(current_atoms))
+            self.reply_log_object.append("full chosen atoms list:")
+            self.reply_log_object.append(str(temp_atom_val_list_out))
 
-    #     # add default atoms to atom_val_list
+    def atom_deletion_clicked(self):
+        global selected_range
+        global temp_atom_val_list
+        
+        atom_input = self.atm_nam.text()
 
-    #     default_atoms = "CA"
+        for_deleting = []
 
-    #     for val in selected_residues:
-            
-    #         if val["atomname"] == default_atoms:
-            
-    #             item.setTextColor(QtGui.QColor("red")) 
-
-    #             if not [point for point in atom_val_list if point == item.my_res_atom['atomval']]:
-    #                     atom_val_list.append( item.my_res_atom['atomval'] )
-    #                     atom_val_list = sorted(atom_val_list, key=lambda item: item)
+        for index, item in enumerate(selected_range):
+            if item["atomname"] == atom_input:
+                for_deleting.append(selected_range[index])
 
 
+                for index, val in enumerate(temp_atom_val_list):
+                    for point in for_deleting:
+                        if point['atomval'] == val:
+                            del temp_atom_val_list[index]
 
+
+        temp_atom_val_list_out = (' '.join(str(e) for e in temp_atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+        print('chosen atoms:')
+        print(str(atom_input))
+        # print(current_atoms)
+        print('[your_chosen_atoms]')
+        print(temp_atom_val_list_out)
+
+        self.reply_log_object.append("chosen atoms:")
+        self.reply_log_object.append(str(atom_input))
+        self.reply_log_object.append("full chosen atoms list:")
+        self.reply_log_object.append(str(temp_atom_val_list_out))
+    
 
     def default_atom_selection(self):
             
@@ -434,15 +456,25 @@ class MainGuiWindow(QtGui.QWidget):
     # layout of the entire window
     def layouts(self):
 
+        #To allow only int
+        min_res = 0 
+        max_res = 999
+        self.onlyInt = QtGui.QIntValidator(min_res, max_res)
+
+
         # residue range selection gui items:
         self.from_res =  QtGui.QLineEdit()
         self.from_res.setFixedWidth(50)
+        self.from_res.setValidator(self.onlyInt)
+
+
             
         self.to_label =  QtGui.QLabel(" to ")
         self.to_label.setFixedWidth(30)
 
         self.to_res =  QtGui.QLineEdit()
         self.to_res.setFixedWidth(50)
+        self.to_res.setValidator(self.onlyInt)
 
         self.atm_nam =  QtGui.QLineEdit()
         self.atm_nam.setFixedWidth(50)
@@ -451,6 +483,7 @@ class MainGuiWindow(QtGui.QWidget):
         sel_point_label =  QtGui.QLabel("Selection of residues:")
         sel_res_label =  QtGui.QLabel("Selection of atoms:")
         range_sel_label =  QtGui.QLabel("Select a range of residues:")
+        range_atom_label =  QtGui.QLabel("Select atom names to add:")
 
 
         # helper section
@@ -499,16 +532,24 @@ class MainGuiWindow(QtGui.QWidget):
         range_layout_opt.addWidget(self.to_label)
         range_layout_opt.addWidget(self.to_res)
         range_layout_opt.addWidget(self.select_button)
-        range_layout_opt.addWidget(self.atm_nam)
-        range_layout_opt.addWidget(self.select_atm_button)
+
+        # atom selector for residue range
+        range_atm_layout_opt = QtGui.QHBoxLayout()
+        range_atm_layout_opt.addWidget(self.atm_nam)
+        range_atm_layout_opt.addWidget(self.select_atm_button)
+        range_atm_layout_opt.addWidget(self.delete_atm_button)
 
         # default atom gui + range of residues gui
         range_layout = QtGui.QVBoxLayout()
+        range_layout.addWidget(range_sel_label)
+        range_layout.addLayout(range_layout_opt)
+        range_layout.addWidget(range_atom_label)
+        range_layout.addLayout(range_atm_layout_opt)
         range_layout.addWidget(default_atoms_label)
         range_layout.addWidget(default_atoms_info)
         range_layout.addWidget(self.default_atoms_button)
-        range_layout.addWidget(range_sel_label)
-        range_layout.addLayout(range_layout_opt)
+        
+        
 
 
         # set the main layout

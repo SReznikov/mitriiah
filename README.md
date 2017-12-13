@@ -38,7 +38,7 @@ To output the atom seletionspress 'p'. A new .ndx file containing only the group
 
 Priority
 
-- fix ranges functionality (show output in 'hamster log', deleting atoms from list, merging the temp.var to the current working var, putting restrictions on values entered, approperiate labelling and placement in the program)
+- fix ranges functionality (deleting atoms from list, merging the temp.var to the current working var, putting restrictions on values entered, approperiate labelling and placement in the program)
 
 - selection of default/desired atom all at once in the list
 - generation of posres.itp along with .ndx files
