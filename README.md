@@ -15,6 +15,12 @@ To run, the rmsf file along with the corresponding .gro file, are required and a
 
 ### Usage:
 
+For bigger systems, each chain/model has to be worked on separately. In the end .ndx file and posres.itp file will be produced. 
+1. Run normal simulation. get rmsf for each model/chain in the simulation.
+2. for umbrella prepare the gro file to get .itp and topol.itp files (after pdb2gmx) - for each model/chain a separate posres + topol.
+3. cut your new gro file into separate files containing one chain/model each.
+4. in the program use the new gro file along with its corresponding rmsf. 
+
 To select residues with the lowest rmsf, right click on the graph in the area you want the selection. The lowest point within the click will be added to the selected residues list/window.
 
 You can delete unwanted points by selecting them in the selections window and pressing 'delete'.
@@ -22,6 +28,8 @@ You can delete unwanted points by selecting them in the selections window and pr
 In order to select desired atoms to be outputted as an index, select the atom in the atoms selection window and press 'v'. To remove from your selections press 'b'.
 
 To output the atom seletionspress 'p'. A new .ndx file containing only the group of selected atoms will also be created. You can copy and paste the contents to your already existing index file. 
+
+The ranges feature is linked to 'by point' feature; if you have points chosen already, and you select range so that the points are within the range, the atoms will be affected - e.g. deleting CA in a range will delete CA from list if the point is falling within. 
 
 ### Quick Guide:
 
@@ -38,7 +46,8 @@ To output the atom seletionspress 'p'. A new .ndx file containing only the group
 
 Priority
 
-- fix ranges functionality (deleting atoms from list, merging the temp.var to the current working var, putting restrictions on values entered, approperiate labelling and placement in the program)
+- allow for multiple ranges work
+- track of which atoms are selected 
 
 - selection of default/desired atom all at once in the list
 - generation of posres.itp along with .ndx files
