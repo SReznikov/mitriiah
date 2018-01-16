@@ -76,7 +76,7 @@ with open(args.my_gro_filename) as gro_file:
         
         cols = line.split()
 
-        if len(cols) == 9: #number of cols in gro file. will depend if pre or post sim (6 or 9 cols)
+        if len(cols) == 6: #number of cols in gro file. will depend if pre or post sim (6 or 9 cols)
             res_col = cols[0]
 
             match = re.match(r"([0-9]+)([a-zA-Z]+)", res_col, re.I)
@@ -108,7 +108,7 @@ def saving_and_output():
         out.write( '\n' )
         out.write((atom_val_list_out) + '\n')
      
-    with open(gro_filename[:-4] + "_posres.itp", 'wt') as out:
+    with open(gro_filename[:-4] + "_posres.itp", 'w') as out:
         out.write( "[ position_restraints ]" + '\n')
         out.write( "; atom  type      fx      fy      fz" + '\n')
         
@@ -121,8 +121,35 @@ def saving_and_output():
 
         '''
 
-        out.write( '\n' )
-        out.write((atom_val_list_out) + '\n')
+        posre_list = [] # list of renumbered atoms corresponding to selected atoms
+
+        # gro_atom_number_out = (' '.join(str(g) for g in gro_atom_number)) 
+        total_atoms = len(gro_atom_number) # total number of atoms in the file
+        renum_vals = range(1, total_atoms+1) # new numbering from 1 for posres
+        posre_dict = zip(renum_vals, gro_atom_number) # dictionary containing original atom numbers and the corresponding renumbered ones
+
+        # create a new renumbered selected atom list
+        for renum, atmnum in posre_dict:
+            for atom_val in atom_val_list:
+                if atom_val == atmnum:
+                    posre_list.append(renum)
+
+
+        for s in posre_list:
+            if s >= 0 and s < 10:
+                out.write("     %s     1  1000  1000  1000\n" % s)
+
+            if s >= 10 and s < 100:
+                out.write("    %s     1  1000  1000  1000\n" % s)
+
+            if s >= 100 and s < 1000:
+                out.write("   %s     1  1000  1000  1000\n" % s)
+
+            if s >= 1000 and s < 10000:
+                out.write("  %s     1  1000  1000  1000\n" % s)
+
+            if s >= 10000:
+                out.write(" %s     1  1000  1000  1000\n" % s)
 
 
 

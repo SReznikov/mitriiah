@@ -50,7 +50,7 @@ Priority
 - track of which atoms are selected 
 
 - selection of default/desired atom all at once in the list
-- generation of posres.itp along with .ndx files
+- generation of posres.itp along with .ndx files -> done, tidying stage
 - fix column selection
 
 
