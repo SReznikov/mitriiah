@@ -53,12 +53,9 @@ selected_residues = [] # residue name+value and atom name+value derived from sel
 
 atom_val_list = [] # list of atom numbers obtained from user selection
 
-custom_ranges = [] # range of residues selected, contains resval, resname, atomval atom name
-selected_range_list = []
-selected_range_dict = []
-ranges_list = {}
-n = 1
-all_ranges = []
+ranges_list = {} # dict containing all the chosen ranges
+n = 1 # range counter
+all_ranges = [] # a list of ranges which are chosen
 
 
 # Open the rmsf.xvg file and assign residue and rmsf variables
@@ -375,8 +372,6 @@ class MainGuiWindow(QtGui.QWidget):
     def range_button_clicked(self):
         # self.select_ranges_list_object.range_button_clicked()
 
-        # global custom_ranges
-        # global selected_range_list
         global ranges_list
         global gro_residue_val
         global n
@@ -406,11 +401,6 @@ class MainGuiWindow(QtGui.QWidget):
 
             print(temp_res_range)
 
-            # ranges_list.append("range 1" int(from_input), int(to_input))
-            
-            # print(ranges_list)
-
-
             self.reply_log_object.append("residues range:")
             self.reply_log_object.append(str(temp_res_range))
 
@@ -420,9 +410,6 @@ class MainGuiWindow(QtGui.QWidget):
                 num = i
                 for index, select_res in enumerate(gro_residue_val):
                     if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
-                        # print(num)
-                        # print(select_res)
-                        # print(ranges_list)
                         temp_list.append( {
                                 "resval":gro_residue_val[index], 
                                 "resname":gro_residue_name[index], 
@@ -432,7 +419,7 @@ class MainGuiWindow(QtGui.QWidget):
             ranges_list["range%s" % n] = temp_list
             all_ranges.append("range%s: %s to %s"   % (n , from_input, to_input))
             n += 1 
-            print(n)
+
         print("mylist")
         print(ranges_list)  
         print("all ranges")
@@ -442,20 +429,6 @@ class MainGuiWindow(QtGui.QWidget):
 
                 # ranges_list = sorted(ranges_list["range%s" % n], key=lambda item: item["atomval"])
             
-        # n += 1  
-
-
-            # main_dict = full_list + [selected_range_list]
-            # # print('main dict')
-            # # print(main_dict)
-            # full_list = main_dict
-            # # print('full list')
-            # # print(full_list)
-            # selected_range_list = []
-
-            # ranges_list.append(selected_range_list)
-        # print(ranges_list)
- 
 
     def atom_selection(self):
             
@@ -472,8 +445,7 @@ class MainGuiWindow(QtGui.QWidget):
         self.delete_atm_button.clicked.connect(self.atom_deletion_clicked)
 
     def atom_button_clicked(self):
-            global custom_ranges
-            global selected_range_list
+
             global atom_val_list
             current_atoms = []
            
@@ -506,8 +478,7 @@ class MainGuiWindow(QtGui.QWidget):
             main_window.selected_residues_list_object.redraw_res_list()
 
     def atom_deletion_clicked(self):
-        global custom_ranges
-        global selected_range_list
+
         global atom_val_list
         
         atom_input = self.atm_nam.text()
@@ -515,10 +486,10 @@ class MainGuiWindow(QtGui.QWidget):
         for_deleting = []
 
         self.reply_log_object.append("Atoms deleted")
-        for index, item in enumerate(custom_ranges[selected_range_list]):
+        for index, item in enumerate([]):
             if item["atomname"] == atom_input:
                 self.reply_log_object.append(str(item))
-                for_deleting.append(custom_ranges[selected_range_list][index])
+                for_deleting.append([][index])
 
 
                 for index, val in enumerate(atom_val_list):
@@ -958,7 +929,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
 
 #     def range_button_clicked(self):
-#         global custom_ranges[selected_range_list]
+#         global []
 #         global gro_residue_val
 #         from_input = self.from_res.text()
 #         to_input = self.to_res.text()
@@ -988,7 +959,7 @@ class SelectedRangeList(QtGui.QListWidget):
 #                 num = i
 #                 for index, select_res in enumerate(gro_residue_val):
 #                     if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
-#                         custom_ranges[selected_range_list].append(
+#                         [].append(
 #                             {
 #                                 "resval":gro_residue_val[index], 
 #                                 "resname":gro_residue_name[index], 
@@ -996,7 +967,7 @@ class SelectedRangeList(QtGui.QListWidget):
 #                                 "atomval":gro_atom_number[index]
 #                             }
 #                         )
-#                 custom_ranges[selected_range_list] = sorted(custom_ranges[selected_range_list], key=lambda item: item["atomval"])
+#                 [] = sorted([], key=lambda item: item["atomval"])
         
 
 
