@@ -53,7 +53,12 @@ selected_residues = [] # residue name+value and atom name+value derived from sel
 
 atom_val_list = [] # list of atom numbers obtained from user selection
 
-selected_range = [] # range of residues selected, contains resval, resname, atomval atom name
+custom_ranges = [] # range of residues selected, contains resval, resname, atomval atom name
+selected_range_list = []
+selected_range_dict = []
+ranges_list = {}
+n = 1
+all_ranges = []
 
 
 # Open the rmsf.xvg file and assign residue and rmsf variables
@@ -343,6 +348,9 @@ class MainGuiWindow(QtGui.QWidget):
         selected_residues_list_object = SelectedResiduesList(selected_residues)
         self.selected_residues_list_object = selected_residues_list_object
 
+        select_ranges_list_object = SelectedRangeList(all_ranges)
+        self.select_ranges_list_object = select_ranges_list_object
+
         reply_log_object = ReplyLog()
         self.reply_log_object = reply_log_object
 
@@ -352,7 +360,6 @@ class MainGuiWindow(QtGui.QWidget):
         self.atom_deletion()
         self.default_atom_selection()
         self.layouts()
-
 
 
         
@@ -366,8 +373,16 @@ class MainGuiWindow(QtGui.QWidget):
 
 
     def range_button_clicked(self):
-        global selected_range
+        # self.select_ranges_list_object.range_button_clicked()
+
+        # global custom_ranges
+        # global selected_range_list
+        global ranges_list
         global gro_residue_val
+        global n
+        global all_ranges
+
+        
         from_input = self.from_res.text()
         to_input = self.to_res.text()
 
@@ -376,7 +391,9 @@ class MainGuiWindow(QtGui.QWidget):
 
         print('min res, max res:')
         print(min_res , max_res)
-
+        
+        
+        temp_list = []
 
         if (int(from_input)) < min_res or (int(to_input)) > max_res:
 
@@ -384,27 +401,60 @@ class MainGuiWindow(QtGui.QWidget):
             self.reply_log_object.append("Error: number entered out of bounds")
 
         else:
-            res_range = list(range(int(from_input), int(to_input) + 1))
+            temp_res_range = list(range(int(from_input), int(to_input) + 1))
 
 
-            print(res_range)
+            print(temp_res_range)
+
+            # ranges_list.append("range 1" int(from_input), int(to_input))
+            
+            # print(ranges_list)
+
 
             self.reply_log_object.append("residues range:")
-            self.reply_log_object.append(str(res_range))
+            self.reply_log_object.append(str(temp_res_range))
 
-            for i in res_range:
+
+            for i in temp_res_range:
+                
                 num = i
                 for index, select_res in enumerate(gro_residue_val):
                     if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
-                        selected_range.append(
-                            {
+                        # print(num)
+                        # print(select_res)
+                        # print(ranges_list)
+                        temp_list.append( {
                                 "resval":gro_residue_val[index], 
                                 "resname":gro_residue_name[index], 
                                 "atomname":gro_atom_name[index], 
-                                "atomval":gro_atom_number[index]
-                            }
-                        )
-                selected_range = sorted(selected_range, key=lambda item: item["atomval"])
+                                "atomval":gro_atom_number[index] } )
+
+            ranges_list["range%s" % n] = temp_list
+            all_ranges.append("range%s: %s to %s"   % (n , from_input, to_input))
+            n += 1 
+            print(n)
+        print("mylist")
+        print(ranges_list)  
+        print("all ranges")
+        print(all_ranges)
+
+        main_window.select_ranges_list_object.redraw_range_list()
+
+                # ranges_list = sorted(ranges_list["range%s" % n], key=lambda item: item["atomval"])
+            
+        # n += 1  
+
+
+            # main_dict = full_list + [selected_range_list]
+            # # print('main dict')
+            # # print(main_dict)
+            # full_list = main_dict
+            # # print('full list')
+            # # print(full_list)
+            # selected_range_list = []
+
+            # ranges_list.append(selected_range_list)
+        # print(ranges_list)
  
 
     def atom_selection(self):
@@ -422,14 +472,15 @@ class MainGuiWindow(QtGui.QWidget):
         self.delete_atm_button.clicked.connect(self.atom_deletion_clicked)
 
     def atom_button_clicked(self):
-            global selected_range
+            global custom_ranges
+            global selected_range_list
             global atom_val_list
             current_atoms = []
            
             atom_input = self.atm_nam.text()
                       
             self.reply_log_object.append("Atoms added")
-            for item in selected_range:
+            for item in ranges_list["range1"]:
                 if item["atomname"] == atom_input:
                     self.reply_log_object.append(str(item))
                     if not [point for point in atom_val_list if point == item['atomval']]:
@@ -455,7 +506,8 @@ class MainGuiWindow(QtGui.QWidget):
             main_window.selected_residues_list_object.redraw_res_list()
 
     def atom_deletion_clicked(self):
-        global selected_range
+        global custom_ranges
+        global selected_range_list
         global atom_val_list
         
         atom_input = self.atm_nam.text()
@@ -463,10 +515,10 @@ class MainGuiWindow(QtGui.QWidget):
         for_deleting = []
 
         self.reply_log_object.append("Atoms deleted")
-        for index, item in enumerate(selected_range):
+        for index, item in enumerate(custom_ranges[selected_range_list]):
             if item["atomname"] == atom_input:
                 self.reply_log_object.append(str(item))
-                for_deleting.append(selected_range[index])
+                for_deleting.append(custom_ranges[selected_range_list][index])
 
 
                 for index, val in enumerate(atom_val_list):
@@ -612,6 +664,12 @@ class MainGuiWindow(QtGui.QWidget):
         range_layout_opt.addWidget(self.to_res)
         range_layout_opt.addWidget(self.select_button)
 
+
+        # ranges list window
+        ranges_window_layout = QtGui.QVBoxLayout()
+        # ranges_window_layout.addWidget(sel_range_label)
+        ranges_window_layout.addWidget(self.select_ranges_list_object)
+
         # atom selector for residue range
         range_atm_layout_opt = QtGui.QHBoxLayout()
         range_atm_layout_opt.addWidget(self.atm_nam)
@@ -620,6 +678,7 @@ class MainGuiWindow(QtGui.QWidget):
 
         # default atom gui + range of residues gui
         range_layout = QtGui.QVBoxLayout()
+        range_layout.addLayout(ranges_window_layout)
         range_layout.addWidget(range_sel_label)
         range_layout.addLayout(range_layout_opt)
         range_layout.addWidget(range_atom_label)
@@ -822,6 +881,128 @@ class SelectedResiduesList(QtGui.QListWidget):
             print('Hamster ran out!')
 
             app.quit()
+
+# object containing the selected points list
+class SelectedRangeList(QtGui.QListWidget):
+    def __init__(self, all_ranges):
+        super(SelectedRangeList, self).__init__()
+
+        self.setWindowTitle('Selected Ranges')
+        self.redraw_range_list()
+
+    def redraw_range_list(self):
+        self.clear()
+
+        global all_ranges
+
+        for ran in all_ranges:
+            range_item = QtGui.QListWidgetItem( ran )
+
+            self.addItem( range_item )
+
+
+    # deleting of items in rows
+    def keyPressEvent(self, event):
+
+        global all_ranges
+
+
+        super(SelectedRangeList, self).keyPressEvent(event)
+        if event.key() == QtCore.Qt.Key_Delete:
+            for item in self.selectedItems():
+
+                # # update the selected points list when deleting
+                # for index, point in enumerate(all_ranges):
+                #     if( point['x'] == item.my_point['x']):
+                #         del all_ranges[index]
+
+
+                # temp_rang_list = []
+
+                # # update the selected residues list when deleting
+                # for index, rang in enumerate(all_ranges):
+                #     if (rang['range'] != item.my_point['x']):
+                        
+                #         temp_rang_list.append( all_ranges[index] )
+                    
+                # all_ranges = temp_rang_list
+
+                self.takeItem(self.row(item)) # delete the row visually
+
+                # # clear corresponding atoms out of memory
+                # temp_atom_list = []
+                # for index, atom in enumerate(atom_val_list):
+                #     for val in all_ranges:
+                        
+                #         if atom == val['atomval']:
+                #             temp_atom_list.append(atom_val_list[index])
+
+                # atom_val_list = temp_atom_list
+
+        self.redraw_range_list()
+
+        # atom numbers printing and saving shortcut
+        if event.key() == QtCore.Qt.Key_P:
+            
+            print('Saved atom list from selction window')
+            main_window.reply_log_object.append("Saved atom list from selection window")
+
+            saving_and_output()
+
+        # quit the program shortcut
+        if event.key() == QtCore.Qt.Key_Q:
+            
+            print('Hamster ran out!')
+
+            app.quit()
+
+
+#     def range_button_clicked(self):
+#         global custom_ranges[selected_range_list]
+#         global gro_residue_val
+#         from_input = self.from_res.text()
+#         to_input = self.to_res.text()
+
+#         min_res = min(gro_residue_val)
+#         max_res = max(gro_residue_val)
+
+#         print('min res, max res:')
+#         print(min_res , max_res)
+
+
+#         if (int(from_input)) < min_res or (int(to_input)) > max_res:
+
+#             print("Error: number entered out of bounds")
+#             self.reply_log_object.append("Error: number entered out of bounds")
+
+#         else:
+#             temp_res_range = list(range(int(from_input), int(to_input) + 1))
+
+
+#             print(temp_res_range)
+
+#             self.reply_log_object.append("residues range:")
+#             self.reply_log_object.append(str(temp_res_range))
+
+#             for i in temp_res_range:
+#                 num = i
+#                 for index, select_res in enumerate(gro_residue_val):
+#                     if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
+#                         custom_ranges[selected_range_list].append(
+#                             {
+#                                 "resval":gro_residue_val[index], 
+#                                 "resname":gro_residue_name[index], 
+#                                 "atomname":gro_atom_name[index], 
+#                                 "atomval":gro_atom_number[index]
+#                             }
+#                         )
+#                 custom_ranges[selected_range_list] = sorted(custom_ranges[selected_range_list], key=lambda item: item["atomval"])
+        
+
+
+
+
+
 
 
 
