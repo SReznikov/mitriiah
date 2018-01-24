@@ -6,10 +6,12 @@ import argparse
 
 from PyQt4 import QtCore, QtGui
 import re
+import shelve
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
+
 
 
 choices=["*.xvg","*.txt","*.gro"] # accepted file extensions
@@ -49,13 +51,22 @@ selected_points_y = [] # rmsf value
 # List of values from gro_file
 gro_residue_val, gro_residue_name, gro_atom_name, gro_atom_number = [], [], [], []
 
+
+##RMSF
 selected_residues = [] # residue name+value and atom name+value derived from selected_points
 
 atom_val_list = [] # list of atom numbers obtained from user selection
 
+## ranges
 ranges_list = {} # dict containing all the chosen ranges
 n = 1 # range counter
-all_ranges = [] # a list of ranges which are chosen
+
+default_atoms = ["CA", "C", "N", "O"]
+
+
+
+
+
 
 
 # Open the rmsf.xvg file and assign residue and rmsf variables
@@ -94,7 +105,11 @@ with open(args.my_gro_filename) as gro_file:
             gro_atom_name.append(str(cols[1]))
             gro_atom_number.append(int(cols[2]))
 
-# save the chosen atom numbers to a new .ndx file. Also prints the values in the terminal. 
+
+
+
+
+# save the chosen atom numbers to a new .ndx file and generate a posres.itp file. Also prints the values in the terminal. 
 def saving_and_output():
     #save index
     atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
@@ -152,6 +167,31 @@ def saving_and_output():
 
             if s >= 10000:
                 out.write(" %s     1  1000  1000  1000\n" % s)
+
+    
+
+# def save_variables(globals_=None):
+#     if globals_ is None:
+#         globals_ = globals()
+#     filename = 'shelve.out'
+#     my_shelf = shelve.open(filename, 'n')
+#     for key, value in globals_.items():
+#         if not key.startswith('__'):
+#             try:
+#                 my_shelf[key] = value
+#             except Exception:
+#                 print('ERROR shelving: "%s"' % key)
+#             else:
+#                 print('shelved: "%s"' % key)
+#     my_shelf.close()
+
+
+# def open_variables():
+#     filename = 'shelve.out'
+#     my_shelf = shelve.open(filename)
+#     for key in my_shelf:
+#         globals()[key]=my_shelf[key]
+#     my_shelf.close()
 
 
 
@@ -224,8 +264,6 @@ class GraphWindow(QtGui.QDialog):
     def __init__(self, x_a_res, y_a_rmsf):
         super(GraphWindow, self).__init__()
 
-        self.setWindowTitle('RMSF plot')
-
         self.main()
   
         self.redraw_graph()
@@ -282,8 +320,8 @@ class GraphWindow(QtGui.QDialog):
         # atom output shortcut
         if event.key() == QtCore.Qt.Key_P:
             
-            print('Saved atom list from Graph-Window')
-            main_window.reply_log_object.append("Saved atom list from Graph-Window")
+            print('Saved atom list')
+            main_window.reply_log_object.append("Saved atom list")
 
             saving_and_output()
 
@@ -291,6 +329,7 @@ class GraphWindow(QtGui.QDialog):
         if event.key() == QtCore.Qt.Key_Q:
             
             print('Hamster ran out!')
+
 
             app.quit()
 
@@ -312,11 +351,13 @@ class ReplyLog(QtGui.QTextEdit):
 
         super(ReplyLog, self).keyPressEvent(event)
 
+        key_shortcuts(event)
+
         # atom output shortcut
         if event.key() == QtCore.Qt.Key_P:
             
-            print('Saved atom list from reply log')
-            main_window.reply_log_object.append("Saved atom list from Graph-Window")
+            print('Saved atom list')
+            main_window.reply_log_object.append("Saved atom list")
 
             saving_and_output()
 
@@ -329,13 +370,6 @@ class ReplyLog(QtGui.QTextEdit):
 
 
 
-# if b.isChecked() == True:
-#   print( b.text()+" is selected")
-# else:
-#   print( b.text()+" is deselected")
-
-
-
 
 # The window which contains everything - layouts included
 class MainGuiWindow(QtGui.QWidget):
@@ -344,6 +378,7 @@ class MainGuiWindow(QtGui.QWidget):
 
         # instantiate the required objects
 
+        #classes
         graph_object = GraphWindow(x_a_res, y_a_rmsf)
         self.graph_object = graph_object
 
@@ -361,82 +396,90 @@ class MainGuiWindow(QtGui.QWidget):
 
         
 
-
+        # functions
+        # RMSF
         self.default_atom_selection()
         self.default_atom_deletion()
-        # self.default_atom_radiobutton_clicked()
         self.atom_radiobuttons()
 
-
-
+        # Range
         self.range_selection()
+
         self.atom_selection()
         self.atom_deletion()
-        # self.all_atoms_range_selection()
-        # self.all_atoms_range_deletion()
+
         self.atom_range_selection()
         self.atom_range_deletion()
+
         self.range_radiobuttons()
 
-        # self.atom_btnstate()
-
-
-
+        # Layout of the program
         self.layouts()
 
+    ######################    
+    ## RMSF atom window ##
+    ######################
 
-        # self.selection_avialable()
-
-
-        
+    ## signalboard 
+    
+    # radiobuttons
     def atom_radiobuttons(self):
 
+        # radiobutton titles
         self.default_button_title = u'Default Atoms'
         self.all_button_title = u'All Atoms'
 
+        # radiobuttons
         self.default_atom_radiobutton = QtGui.QRadioButton(self.default_button_title)
         self.all_atom_radiobutton = QtGui.QRadioButton(self.all_button_title)
 
+    # button states
     def select_atom_btnstate(self):
+
         if self.default_atom_radiobutton.isChecked() == True:
             self.default_button_clicked()
+
         if self.all_atom_radiobutton.isChecked() == True:
-            print("all atoms selected")
+            self.all_button_clicked()
 
     def delete_atom_btnstate(self):
+
         if self.default_atom_radiobutton.isChecked() == True:
-            print("defaults deleted")
+            self.default_delete_button_clicked()
+
         if self.all_atom_radiobutton.isChecked() == True:
-            print("all atoms deleted")
+            self.all_delete_button_clicked()
 
     
-    # default atom buttons and functions for rmsf
+    ## default atom buttons 
     def default_atom_selection(self):
             
         self.default_atoms_button =  QtGui.QPushButton("Select")
         self.default_atoms_button.setFixedWidth(80)
 
         self.default_atoms_button.clicked.connect(self.select_atom_btnstate)
+
+    def default_atom_deletion(self):
+            
+        self.default_atoms_button_delete =  QtGui.QPushButton("Delete")
+        self.default_atoms_button_delete.setFixedWidth(80)
+
+        self.default_atoms_button_delete.clicked.connect(self.delete_atom_btnstate)
     
 
+    # functions
+    # add default atoms
     def default_button_clicked(self):
         global selected_residues
         global atom_val_list
+        global default_atoms
 
-        # add default atoms to atom_val_list
 
-        self.default_atoms = ["CA", "C", "N", "O"]
-
-        # self.reply_log_object.append(self.default_atoms)
-
-        self.reply_log_object.append("Atoms added")
-        for atom in self.default_atoms:
+        for atom in default_atoms:
 
             for item in selected_residues:
-                # select automatically all defaults
+
                 if item["atomname"] == atom:
-                    self.reply_log_object.append(str(item))
-                    # val.setTextColor(QtGui.QColor("red")) 
 
                     if not [point for point in atom_val_list if point == item['atomval']]:
                             atom_val_list.append( item['atomval'] )
@@ -453,17 +496,106 @@ class MainGuiWindow(QtGui.QWidget):
 
         main_window.selected_residues_list_object.redraw_res_list()
 
-    def default_atom_deletion(self):
-            
-        self.default_atoms_button_delete =  QtGui.QPushButton("Delete")
-        self.default_atoms_button_delete.setFixedWidth(80)
-
-        self.default_atoms_button_delete.clicked.connect(self.delete_atom_btnstate)
+    # add all atoms
+    def all_button_clicked(self):
+        global selected_residues
+        global atom_val_list
 
 
+        for item in selected_residues:
+
+            if not [point for point in atom_val_list if point == item['atomval']]:
+                    atom_val_list.append( item['atomval'] )
+                    atom_val_list = sorted(atom_val_list, key=lambda item: item)
 
 
-    # gui responsible for residue range selections.
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        self.reply_log_object.append("full chosen atoms list:")
+        self.reply_log_object.append(str(atom_val_list_out))
+
+
+        main_window.selected_residues_list_object.redraw_res_list()
+
+
+    # delete default atoms
+    def default_delete_button_clicked(self):
+    
+        global atom_val_list
+        global selected_residues
+        global default_atoms
+
+
+        for_deleting = []
+
+
+        for atom in default_atoms:
+
+            for item in selected_residues:
+
+                if item["atomname"] == atom:
+                    for_deleting.append(item['atomval'])
+
+
+                    for index, val in enumerate(atom_val_list):
+                        for point in for_deleting:
+                            if point == val:
+                                del atom_val_list[index]
+
+
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        self.reply_log_object.append("full chosen atoms list:")
+        self.reply_log_object.append(str(atom_val_list_out))
+
+
+        main_window.selected_residues_list_object.redraw_res_list()
+
+
+    # delete all atoms
+    def all_delete_button_clicked(self):
+    
+        global atom_val_list
+        global selected_residues
+
+        for_deleting = []
+
+
+        for item in selected_residues:
+
+            for_deleting.append(item['atomval'])
+
+            for index, val in enumerate(atom_val_list):
+                for point in for_deleting:
+                    if point == val:
+                        del atom_val_list[index]
+
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        self.reply_log_object.append("full chosen atoms list:")
+        self.reply_log_object.append(str(atom_val_list_out))
+
+
+        main_window.selected_residues_list_object.redraw_res_list()
+
+
+
+    ###################
+    ## RANGES window ##
+    ###################
+
+    ## residue range selections
+
+    # button and function
     def range_selection(self):
             
         self.select_button = QtGui.QPushButton("Select")
@@ -473,12 +605,10 @@ class MainGuiWindow(QtGui.QWidget):
 
 
     def range_button_clicked(self):
-        # self.select_ranges_list_object.range_button_clicked()
 
         global ranges_list
         global gro_residue_val
         global n
-        global all_ranges
 
         
         from_input = self.from_res.text()
@@ -487,12 +617,10 @@ class MainGuiWindow(QtGui.QWidget):
         min_res = min(gro_residue_val)
         max_res = max(gro_residue_val)
 
-        print('min res, max res:')
-        print(min_res , max_res)
-        
-        
+   
         temp_list = []
 
+        # input restrictions
         if (int(from_input)) < min_res or (int(to_input)) > max_res:
 
             print("Error: number entered out of bounds")
@@ -502,15 +630,11 @@ class MainGuiWindow(QtGui.QWidget):
             temp_res_range = list(range(int(from_input), int(to_input) + 1))
 
 
-            print(temp_res_range)
-
-            self.reply_log_object.append("residues range:")
-            self.reply_log_object.append(str(temp_res_range))
-
-
+            # setting of the data structure for each range added
             for i in temp_res_range:
                 
                 num = i
+
                 for index, select_res in enumerate(gro_residue_val):
                     if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
                         temp_list.append( {
@@ -529,38 +653,32 @@ class MainGuiWindow(QtGui.QWidget):
                                 "to_val":to_input
                                 })
            
-            all_ranges.append("range%s: %s to %s"   % (n , from_input, to_input))
             n += 1 
 
-        # print("mylist")
-        # print(ranges_list)  
-        # print("all ranges")
-        # print(all_ranges)
 
 
         main_window.select_ranges_list_object.redraw_range_list()
 
-                # ranges_list = sorted(ranges_list["range%s" % n], key=lambda item: item["atomval"])
-            
+   
+
+    ## signalboard
+
+    # radiobuttons     
     def range_radiobuttons(self):
 
+        # titles
         self.default_button_title = u'Default Atoms'
         self.all_button_title = u'All Atoms'
         self.specific_atm_range_radiobutton_title = u'Specific Atoms'
 
+        # radiobuttons
         self.default_range_radiobutton = QtGui.QRadioButton(self.default_button_title)
         self.all_range_radiobutton = QtGui.QRadioButton(self.all_button_title)
         self.specific_atm_range_radiobutton = QtGui.QRadioButton(self.specific_atm_range_radiobutton_title)
         self.specific_atm_range_radiobutton.toggled.connect(self.select_range_btnstate)
 
-    # def selection_avialable(self):
-    #     if self.specific_atm_range_radiobutton.isChecked() == True:
-    #         self.atm_nam.setDisabled(False)
-    #     else:
-    #         self.atm_nam.setDisabled(True)
 
-
-    # default atom buttons for ranges
+    # buttons linking to the buttonstate of radiobuttons
     def atom_range_selection(self):
            
         self.atoms_range_button =  QtGui.QPushButton("Select")
@@ -578,16 +696,21 @@ class MainGuiWindow(QtGui.QWidget):
         self.atoms_range_button_delete.clicked.connect(self.delete_range_btnstate)
 
 
+
+
+    # button states
     def select_range_btnstate(self):
         if self.default_range_radiobutton.isChecked() == True:
-            print("defaults in range selected")
+            self.add_default_atoms_range()
+
         if self.all_range_radiobutton.isChecked() == True:
-            print("all atoms selected in range")
+            main_window.select_ranges_list_object.add_all_atoms_by_range()
+
         if self.specific_atm_range_radiobutton.isChecked() == True:
             self.atm_nam.setDisabled(False)
             self.select_atm_button.setDisabled(False)
             self.delete_atm_button.setDisabled(False)
-            print("specific addition available")
+
         else:
             self.atm_nam.setDisabled(True)
             self.select_atm_button.setDisabled(True)
@@ -596,16 +719,16 @@ class MainGuiWindow(QtGui.QWidget):
 
     def delete_range_btnstate(self):
         if self.default_range_radiobutton.isChecked() == True:
-            print("defaults deleted in range")
+            main_window.select_ranges_list_object.delete_default_atoms_by_range()
+
         if self.all_range_radiobutton.isChecked() == True:
-            print("all atoms deleted in range")
-        if self.specific_atm_range_radiobutton.isChecked() == True:
-            print("specific deletion available")
-           # self.atom_deletion_clicked()
+            main_window.select_ranges_list_object.delete_all_atoms_by_range()
 
 
 
+    ## functions for ranges
 
+    ## specific atoms
     # individual atom selection buttons for ranges
     def atom_selection(self):
             
@@ -623,6 +746,8 @@ class MainGuiWindow(QtGui.QWidget):
 
         self.delete_atm_button.clicked.connect(self.atom_deletion_clicked)
 
+
+    # function for specific atom selection
     def atom_button_clicked(self):
 
         global atom_val_list
@@ -633,46 +758,12 @@ class MainGuiWindow(QtGui.QWidget):
 
         self.atom_input = atom_input
 
-        # main_window.atom_button_clicked()
 
         main_window.select_ranges_list_object.add_atoms_by_range()
 
-
-                  
-        # self.reply_log_object.append("Atoms added")
-
-        # for range_name, range_list in ranges_list.items():
-
-
-        #     for item in ranges_list[range_name]['range']:
-
-        #         print(item)
-            # for range_name, range_list in ranges_list.items():
-
-        #         if item["atomname"] == atom_input:
-        #             self.reply_log_object.append(str(item))
-        #             if not [point for point in atom_val_list if point == item['atomval']]:
-        #                         atom_val_list.append( item['atomval'])
-        #                         atom_val_list = sorted(atom_val_list, key=lambda item: item)
-        #                         current_atoms.append( item['atomval'])
-        #                         current_atoms = sorted(current_atoms, key=lambda item: item)
-                
-
-        # atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-        # print('chosen atoms:')
-        # print(str(atom_input))
-        # print(current_atoms)
-        # print('[your_chosen_atoms]')
-        # print(atom_val_list_out)
-
-        # self.reply_log_object.append("chosen atoms:")
-        # self.reply_log_object.append(str(atom_input))
-        # self.reply_log_object.append(str(current_atoms))
-        # self.reply_log_object.append("full chosen atoms list:")
-        # self.reply_log_object.append(str(atom_val_list_out))
-
         main_window.selected_residues_list_object.redraw_res_list()
 
+    
     def atom_deletion_clicked(self):
 
         global atom_val_list
@@ -685,196 +776,122 @@ class MainGuiWindow(QtGui.QWidget):
 
         main_window.select_ranges_list_object.delete_atoms_by_range()
 
-        # self.reply_log_object.append("Atoms deleted")
-        # for index, item in enumerate([]):
-        #     if item["atomname"] == atom_input:
-        #         self.reply_log_object.append(str(item))
-        #         for_deleting.append([][index])
-
-
-        #         for index, val in enumerate(atom_val_list):
-        #             for point in for_deleting:
-        #                 if point['atomval'] == val:
-        #                     del atom_val_list[index]
+        main_window.selected_residues_list_object.redraw_res_list()
 
 
 
-        # atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-        # print('chosen atoms:')
-        # print(str(atom_input))
-        # # print(current_atoms)
-        # print('[your_chosen_atoms]')
-        # print(atom_val_list_out)
+    ## default atom selection functions
 
-        # self.reply_log_object.append("chosen atoms:")
-        # self.reply_log_object.append(str(atom_input))
-        # self.reply_log_object.append("full chosen atoms list:")
-        # self.reply_log_object.append(str(atom_val_list_out))
+    def add_default_atoms_range(self):
+
+        global atom_val_list
+        global default_atoms
+
+
+        main_window.select_ranges_list_object.add_default_atoms_by_range()
 
         main_window.selected_residues_list_object.redraw_res_list()
 
 
 
 
-    # # all atom option buttons for ranges
-    # def all_atoms_range_selection(self):
-            
-    #     self.all_atoms_range_button =  QtGui.QPushButton("Select")
-    #     self.all_atoms_range_button.setFixedWidth(80)
+    ## layout of the entire window
 
-    #     # self.atoms_range_button.clicked.connect(self.default_button_range_clicked)
-
-
-
-    # def all_atoms_range_deletion(self):
-            
-    #     self.all_atoms_range_button_delete =  QtGui.QPushButton("Delete")
-    #     self.all_atoms_range_button_delete.setFixedWidth(80)
-
-
- 
-
-
-
-
-
-
-    # layout of the entire window
     def layouts(self):
+
+        
+        ### residue range selection gui items: ###
 
         #To allow only int
         min_res = 0 
         max_res = 999
         self.onlyInt = QtGui.QIntValidator(min_res, max_res)
 
-
-        # residue range selection gui items:
+        # line editor for 'from' input 
         self.from_res =  QtGui.QLineEdit()
         self.from_res.setFixedWidth(50)
         self.from_res.setValidator(self.onlyInt)
 
-
-            
+        # a label            
         self.to_label =  QtGui.QLabel(" to ")
         self.to_label.setFixedWidth(30)
 
+        # line edit for 'to' input
         self.to_res =  QtGui.QLineEdit()
         self.to_res.setFixedWidth(50)
         self.to_res.setValidator(self.onlyInt)
 
+        # line editor for inputting specific atoms
         self.atm_nam =  QtGui.QLineEdit()
         self.atm_nam.setFixedWidth(60)
         self.atm_nam.setPlaceholderText("e.g. CA")
         self.atm_nam.setDisabled(True)
 
-        # object labels
+
+
+        ### object labels ###
+
+        # RMSF
         sel_point_label =  QtGui.QLabel("Selected residues:")
         sel_res_label =  QtGui.QLabel("Selected atoms:")
+
+        # Ranges
         range_sel_label =  QtGui.QLabel("Select a range of residues:")
         range_atom_label =  QtGui.QLabel("Select atom names to add:")
+
         default_range_label = QtGui.QLabel("Default atoms:")
+        default_atoms_label = QtGui.QLabel("Default atoms: CA, N, O, C")
+
         all_atoms_range_label = QtGui.QLabel("All atoms:")
 
+        # window titles
         range_window_label =  QtGui.QLabel("Ranges Selection Window:")
         rmsf_selection_label =  QtGui.QLabel("Selection by RMSF Window:")
 
-
-
-
         # helper section
-        button_d =  QtGui.QPushButton("This does nothing")
-
         help_info = QtGui.QLabel("Shortcuts: 'v' - select atoms ; 'b' - deselect atoms ; 'del' - delete selected residues ; 'p' - print selected atom numbers")
-
-        # labelling for default atom selection
-        default_atoms_label = QtGui.QLabel("Default atoms: CA, N, O, C")
-        # default_atoms_info = QtGui.QLabel("CA, N, O, C")
-        # default_atoms_button =  QtGui.QPushButton("Select")
 
 
         
-        # containers
+        ### containers ###
+
 
         # helper bar (below graph)
         helper_bar = QtGui.QGridLayout()
-        helper_bar.addWidget(button_d, 0,0)
         
         helper_bar.addWidget(self.reply_log_object, 1, 0)
         helper_bar.addWidget(help_info, 2, 0)
 
+
+
         # graph window
         graph_window_layout = QtGui.QVBoxLayout()
+
         graph_window_layout.addWidget(self.graph_object)
         graph_window_layout.addLayout(helper_bar)
-#############
-###########
-
-        # #selection of residues/points window
-        # points_window_layout = QtGui.QVBoxLayout()
-        # points_window_layout.addWidget(sel_point_label)
-        # points_window_layout.addWidget(self.selected_points_list_object)
-
-        # # selection of atoms window
-        # atoms_window_layout = QtGui.QVBoxLayout()
-        # atoms_window_layout.addWidget(sel_res_label)
-        # atoms_window_layout.addWidget(self.selected_residues_list_object)
 
 
 
-        # # range of residues gui
-        # range_layout_opt = QtGui.QHBoxLayout()
-        # range_layout_opt.addWidget(self.from_res)
-        # range_layout_opt.addWidget(self.to_label)
-        # range_layout_opt.addWidget(self.to_res)
-        # range_layout_opt.addWidget(self.select_button)
 
+        ### RMSF window ###
 
-        # # ranges list window
-        # ranges_window_layout = QtGui.QVBoxLayout()
-        # # ranges_window_layout.addWidget(sel_range_label)
-        # ranges_window_layout.addWidget(self.select_ranges_list_object)
-
-        # # atom selector for residue range
-        # range_atm_layout_opt = QtGui.QHBoxLayout()
-        # range_atm_layout_opt.addWidget(self.atm_nam)
-        # range_atm_layout_opt.addWidget(self.select_atm_button)
-        # range_atm_layout_opt.addWidget(self.delete_atm_button)
-
-        # # default atom gui + range of residues gui
-        # range_layout = QtGui.QVBoxLayout()
-        # range_layout.addLayout(ranges_window_layout)
-        # range_layout.addWidget(range_sel_label)
-        # range_layout.addLayout(range_layout_opt)
-        # range_layout.addWidget(range_atom_label)
-        # range_layout.addLayout(range_atm_layout_opt)
-        # range_layout.addWidget(default_atoms_label)
-        # range_layout.addWidget(default_atoms_info)
-        # range_layout.addWidget(self.default_atoms_button)
-##########################
-##########################
-
+        # RMSF add and delete buttons box
         default_buttons = QtGui.QHBoxLayout()
         default_buttons.addWidget(self.default_atoms_button)
         default_buttons.addWidget(self.default_atoms_button_delete)
 
-        # button choices
+        # RMSF radiobuttons
         atom_radiobutton_layout = QtGui.QHBoxLayout()
-
-        # default_button_title = u'Default Atoms'
-        # all_button_title = u'All Atoms'
-
-        # default_atom_radiobutton = QtGui.QRadioButton(default_button_title)
-        # all_atom_radiobutton = QtGui.QRadioButton(all_button_title)
 
         atom_radiobutton_layout.addWidget(self.default_atom_radiobutton)
         atom_radiobutton_layout.addWidget(self.all_atom_radiobutton)
 
 
-
-        # atom buttons section
+        # RMSF button container
         atom_buttons = QtGui.QVBoxLayout()
+
         atom_buttons.addWidget(default_atoms_label)
-        # atom_buttons.addWidget(default_atoms_info)
+
         atom_buttons.addLayout(atom_radiobutton_layout)
         atom_buttons.addLayout(default_buttons)
 
@@ -882,203 +899,141 @@ class MainGuiWindow(QtGui.QWidget):
 
         # selected residues window
         selected_residues = QtGui.QVBoxLayout()
+
         selected_residues.addWidget(sel_point_label)
         selected_residues.addWidget(self.selected_points_list_object)
+
         selected_residues.addLayout(atom_buttons)
+
 
         # selected atoms window
         selected_atoms = QtGui.QVBoxLayout()
+
         selected_atoms.addWidget(sel_res_label)
         selected_atoms.addWidget(self.selected_residues_list_object)
 
-        # atom layout
+
+        # RMSF layout
         atom_layout = QtGui.QHBoxLayout()
+
         atom_layout.addLayout(selected_residues)
         atom_layout.addLayout(selected_atoms)
 
-        ###
 
 
+
+        ### Ranges window ###
 
         # ranges window
-
         ranges_window = QtGui.QVBoxLayout()
-        # ranges_window_layout.addWidget(sel_range_label)
+
         ranges_window.addWidget(self.select_ranges_list_object)
 
 
+        # ranges selector objects
         range_options = QtGui.QHBoxLayout()
+
         range_options.addWidget(self.from_res)
         range_options.addWidget(self.to_label)
         range_options.addWidget(self.to_res)
         range_options.addWidget(self.select_button)
 
-        # all_atoms_range = QtGui.QHBoxLayout()
-        # all_atoms_range.addWidget(self.all_atoms_range_button)
-        # all_atoms_range.addWidget(self.all_atoms_range_button_delete)
 
+        # radiobutton layout
         range_radiobutton_layout = QtGui.QVBoxLayout()
-
-        # default_button_title = u'Default Atoms'
-        # all_button_title = u'All Atoms'
-
-        # default_range_radiobutton = QtGui.QRadioButton(default_button_title)
-        # all_range_radiobutton = QtGui.QRadioButton(all_button_title)
 
         range_radiobutton_layout.addWidget(self.default_range_radiobutton)
         range_radiobutton_layout.addWidget(self.all_range_radiobutton)
         range_radiobutton_layout.addWidget(self.specific_atm_range_radiobutton)
 
 
+        # buttons for adding and deleting - relating to radiobuttons
         button_options = QtGui.QVBoxLayout()
+
         button_options.addWidget(self.atoms_range_button)
         button_options.addWidget(self.atoms_range_button_delete)
 
+
+        # container for the radiobuttons, adding and deleting
         selectors = QtGui.QHBoxLayout()
+
         selectors.addLayout(range_radiobutton_layout)
         selectors.addLayout(button_options)
 
 
+        # specific atom selector objects
         specific_atoms_options = QtGui.QHBoxLayout()
+
         specific_atoms_options.addWidget(self.atm_nam)
         specific_atoms_options.addWidget(self.select_atm_button)
         specific_atoms_options.addWidget(self.delete_atm_button)
 
-        # ranges buttons
+
+        ## container for all the buttons
         ranges_buttons = QtGui.QVBoxLayout()
+
+        # range selection
         ranges_buttons.addWidget(range_sel_label)
         ranges_buttons.addLayout(range_options)
 
-        # ranges_buttons.addWidget(all_atoms_range_label)
-        # ranges_buttons.addLayout(all_atoms_range)
-
-        # ranges_buttons.addWidget(default_range_label)
-
-        # ranges_buttons.addLayout(range_radiobutton_layout)
-        # ranges_buttons.addLayout(button_options)
+        # radiobuttons
         ranges_buttons.addLayout(selectors)
 
+        # specific atom selection
         ranges_buttons.addWidget(range_atom_label)
         ranges_buttons.addLayout(specific_atoms_options)
 
-        # button choices
 
-
-        # range layout
+        ## range layout
         range_layout = QtGui.QHBoxLayout()
-        # range_layout.setS
+
         range_layout.addLayout(ranges_window)
         range_layout.addLayout(ranges_buttons)
         
 
-        # range_box = QtGui.QFrame()
-        # range_box.resize(300,300)
-        # range_box.setFrameStyle(QFrame.Panel | QFrame.Raised)
-        # range_box.setLineWidth(2)
 
+        ### code for frames ##
 
-
-        # # createTypeGroupBox()
-        # qvboxlayout = QtGui.QVBoxLayout()
-
-        # # creates a QRadioButton list
-        # qradiobutton_list = []
-        # for i in range(3):
-        #     # title of the QRadioButton
-        #     button_title = u'QRadioButton &{index}'.format(
-        #         index=i + 1
-        #     )
-
-        #     # creates a QRadioButton
-        #     qradiobutton = QtGui.QRadioButton(button_title)
-
-        #     # adds the QRadioButton to the list
-        #     qradiobutton_list.append(qradiobutton)
-
-        #     # adds the QRadioButton to the QVBoxLayout
-        #     qvboxlayout.addWidget(qradiobutton)
-
-
-
-
-
-        ##to individually set colors
-        # self.GB.setObjectName("ColoredGroupBox")  # Changed here...
-        # self.GB.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid red; border-radius: 9px;}") 
-
-###########
-
-        # code for frames
         atom_box_frame = QtGui.QGroupBox()
         atom_box_frame.setStyleSheet("QGroupBox { border: 1px solid gray; margin-top: 0.5em} QGroupBox::title {    subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}")
+        
         # sets the margins
         left, top, right, bottom = 10, 10, 10, 10
         atom_box_frame.setContentsMargins(left, top, right, bottom)
+
         atom_box_frame.setTitle("&Atom selection by RMSF")
         atom_box_frame.setLayout(atom_layout)
 
+
         range_box_frame = QtGui.QGroupBox()
         range_box_frame.setStyleSheet("QGroupBox { border: 1px solid gray; margin-top: 0.5em} QGroupBox::title {    subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}")
+        
         # sets the margins
         left, top, right, bottom = 10, 10, 10, 10
+
         range_box_frame.setContentsMargins(left, top, right, bottom)
         range_box_frame.setTitle("&Range Selection")
         range_box_frame.setLayout(range_layout)
 
 
-        ###
 
-        # selector windows
+        ### RMSF and Range window container ##
         atom_and_range = QtGui.QVBoxLayout()
-        # atom_and_range.addWidget(rmsf_selection_label)
-        # atom_and_range.addLayout(atom_layout)
-        # atom_and_range.addWidget(range_window_label)
-        # atom_and_range.addLayout(range_layout)
 
         atom_and_range.addWidget(atom_box_frame)
         atom_and_range.addWidget(range_box_frame)
 
-        ###
 
-        # main layout
+        ### main layout ##
 
         main_layout = QtGui.QHBoxLayout()
+
         main_layout.addLayout(graph_window_layout)
         main_layout.addLayout(atom_and_range)
 
-        # main_layout.addWidget(range_box)
-        # main_layout.addWidget(box_frame)
 
         self.setLayout(main_layout)
 
-####################
-##################
-
-        # # set the main layout
-        # sel_point_layout = QtGui.QGridLayout()
-
-        # sel_point_layout.addLayout(graph_window_layout, 0,0,6,6)
-        # sel_point_layout.addLayout(points_window_layout, 0, 6, 3, 2)
-        # sel_point_layout.addLayout(range_layout, 2, 8, 1, 2)
-        # sel_point_layout.addLayout(atoms_window_layout, 3, 6, 6, 4)
-        
-
-        # self.setLayout(sel_point_layout)
-
-
-    # def btnstate(self,b):
-        
-    #       if b.text() == "Default Atoms":
-    #          if b.isChecked() == True:
-    #             print( b.text()+" is selected")
-    #          else:
-    #             print( b.text()+" is deselected")
-                    
-    #       if b.text() == "All Atoms":
-    #          if btn.isChecked() == True:
-    #             print( b.text()+" is selected")
-    #          else:
-    #             print( b.text()+" is deselected")
 
 
     # define the keyboard shortcuts
@@ -1098,17 +1053,19 @@ class MainGuiWindow(QtGui.QWidget):
         if event.key() == QtCore.Qt.Key_Q:
             
             print('Hamster ran out!')
+            # save_variables()
 
             app.quit()
 
+        # if event.key() == QtCore.Qt.Key_L:
+        #     open_variables()
 
 
-# object containing the selected points list
+
+# object containing the selected points from the graph list
 class SelectedPointsList(QtGui.QListWidget):
     def __init__(self, selected_points):
         super(SelectedPointsList, self).__init__()
-
-        self.setWindowTitle('Selected Points')
     
 
     # deleting of items in rows
@@ -1119,7 +1076,8 @@ class SelectedPointsList(QtGui.QListWidget):
 
 
         super(SelectedPointsList, self).keyPressEvent(event)
-        # https://stackoverflow.com/questions/38507011/implementing-keypressevent-in-qwidget
+
+
         if event.key() == QtCore.Qt.Key_Delete:
             for item in self.selectedItems():
 
@@ -1150,9 +1108,19 @@ class SelectedPointsList(QtGui.QListWidget):
 
                 atom_val_list = temp_atom_list
 
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
         main_window.graph_object.redraw_graph()
         main_window.selected_residues_list_object.redraw_res_list()
 
+        
         # atom numbers printing and saving shortcut
         if event.key() == QtCore.Qt.Key_P:
             
@@ -1174,9 +1142,8 @@ class SelectedResiduesList(QtGui.QListWidget):
     def __init__(self, selected_residues):
         super(SelectedResiduesList, self).__init__()
 
-        self.setWindowTitle('Selected Residues and atom selection')
-
         self.redraw_res_list()
+
 
     # populate the list window and keep it updated
     def redraw_res_list(self):
@@ -1235,6 +1202,14 @@ class SelectedResiduesList(QtGui.QListWidget):
                     atom_val_list.append( item.my_res_atom['atomval'] )
                     atom_val_list = sorted(atom_val_list, key=lambda item: item)
 
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
 
         # delete desired atoms from the atom list by pressing 'b'
         if event.key() == QtCore.Qt.Key_B:
@@ -1246,6 +1221,15 @@ class SelectedResiduesList(QtGui.QListWidget):
                 for index, atm in enumerate(atom_val_list):
                     if( atm == item.my_res_atom['atomval']):
                         del atom_val_list[index]
+
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
 
         # print and save the atom values by pressing 'p'
         if event.key() == QtCore.Qt.Key_P:
@@ -1262,24 +1246,21 @@ class SelectedResiduesList(QtGui.QListWidget):
 
             app.quit()
 
-# object containing the selected points list
+# object containing the ranges functionality
 class SelectedRangeList(QtGui.QListWidget):
 
     def __init__(self, ranges_list):
         super(SelectedRangeList, self).__init__()
 
-        self.setWindowTitle('Selected Ranges')
         self.redraw_range_list()
 
     def redraw_range_list(self):
         self.clear()
 
-        global all_ranges
         global ranges_list
 
 
         for range_name, range_list in ranges_list.items():
-
 
             range_item = QtGui.QListWidgetItem("%s : " " %s " "to" " %s " "atoms selected: " " %s"  % (range_name, range_list['from_val'], range_list['to_val'], range_list['current_atoms'] ))
 
@@ -1288,7 +1269,7 @@ class SelectedRangeList(QtGui.QListWidget):
             self.addItem( range_item )
 
 
-    # adding atoms
+    # adding specific atoms to a selected range
     def add_atoms_by_range(self):
 
         global atom_val_list
@@ -1298,11 +1279,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
         for item in self.selectedItems():
 
-
             for range_name, range_list in ranges_list.items():
-
-                # print('range name')
-                # print(range_name)
 
                 if range_name == item.my_range['range_number']:
 
@@ -1310,39 +1287,29 @@ class SelectedRangeList(QtGui.QListWidget):
 
                         if atom_name['atomname'] == main_window.atom_input:
 
-            #             self.reply_log_object.append(str(item))
-
                             if not [point for point in atom_val_list if point == atom_name['atomval']]:
                                         atom_val_list.append( atom_name['atomval'])
                                         atom_val_list = sorted(atom_val_list, key=lambda item: atom_name['atomval'])
                                         current_atoms.append( atom_name['atomval'])
-                                        # current_atoms = sorted(current_atoms, key=lambda item: atom_name)
 
                             if not [point for point in ranges_list[range_name]["current_atoms"] if point == atom_name['atomname']]:
 
-                                # self.current_atoms_list.append(atom_name['atomname'])
                                 ranges_list[range_name]["current_atoms"].append(atom_name['atomname'])
-                                 # = self.current_atoms_list
-                                print('current atoms in dict:')
-                                print(ranges_list[range_name]['current_atoms'])
+
                     
 
             atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-            # print('chosen atoms:')
-            # print(str(main_window.atom_input))
-            # print(current_atoms)
+            
             print('[your_chosen_atoms]')
             print(atom_val_list_out)
+            main_window.reply_log_object.append("full chosen atoms list:")
+            main_window.reply_log_object.append(str(atom_val_list_out))
 
-            # self.reply_log_object.append("chosen atoms:")
-            # self.reply_log_object.append(str(atom_input))
-            # self.reply_log_object.append(str(current_atoms))
-            # self.reply_log_object.append("full chosen atoms list:")
-            # self.reply_log_object.append(str(atom_val_list_out))
 
             self.redraw_range_list()
+            main_window.selected_residues_list_object.redraw_res_list()
 
-    # deleting atoms
+    # deleting specific atoms
     def delete_atoms_by_range(self):
 
         global atom_val_list
@@ -1352,11 +1319,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
         for item in self.selectedItems():
 
-
             for range_name, range_list in ranges_list.items():
-
-                # print('range name')
-                print(ranges_list[range_name].keys())
 
                 if range_name == item.my_range['range_number']:
 
@@ -1367,8 +1330,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
                             for index, val in enumerate(atom_val_list):
                                 for point in for_deleting:
-                                    # print("point")
-                                    # print(point)
+
                                     if point == val:
                                         del atom_val_list[index]
 
@@ -1376,63 +1338,225 @@ class SelectedRangeList(QtGui.QListWidget):
                         if atom == main_window.atom_input:
                             del ranges_list[range_name]['current_atoms'][index]
                         
-                print(atom_val_list)
-        # self.reply_log_object.append("Atoms deleted")
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
+
+        self.redraw_range_list()
+        main_window.selected_residues_list_object.redraw_res_list()
+
+    
+    def add_default_atoms_by_range(self):
+
+        global atom_val_list
+        global default_atoms
+
+        for item in self.selectedItems():
+
+            for range_name, range_list in ranges_list.items():
+
+                if range_name == item.my_range['range_number']:
+
+                    for atom_name in ranges_list[range_name]['range']:
+
+                        for atom in default_atoms:
+
+                            if atom_name['atomname'] == atom:
+
+                                if not [point for point in atom_val_list if point == atom_name['atomval']]:
+                                            atom_val_list.append( atom_name['atomval'])
+                                            atom_val_list = sorted(atom_val_list, key=lambda item: atom_name['atomval'])
+                                   
+                                if not [point for point in ranges_list[range_name]["current_atoms"] if point == atom_name['atomname']]:
+
+
+                                    ranges_list[range_name]["current_atoms"].append(atom_name['atomname'])
+
+
 
 
         atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-        # print('chosen atoms:')
-        # print(str(atom_input))
-        # # print(current_atoms)
-        # print('[your_chosen_atoms]')
-        # print(atom_val_list_out)
 
-        # self.reply_log_object.append("chosen atoms:")
-        # self.reply_log_object.append(str(atom_input))
-        # self.reply_log_object.append("full chosen atoms list:")
-        # self.reply_log_object.append(str(atom_val_list_out))
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
 
         self.redraw_range_list()
+        main_window.selected_residues_list_object.redraw_res_list()
+
+
+    def delete_default_atoms_by_range(self):
+
+        global atom_val_list
+        global default_atoms
+
+        for_deleting = []
+
+
+        for item in self.selectedItems():
+
+            for range_name, range_list in ranges_list.items():
+
+                if range_name == item.my_range['range_number']:
+
+                    for atom_name in ranges_list[range_name]['range']:
+
+                        for atom in default_atoms:
+
+                            if atom_name['atomname'] == atom:
+
+                                for_deleting.append(atom_name['atomval'])
+
+                                for index, val in enumerate(atom_val_list):
+                                    for point in for_deleting:
+                                        if point == val:
+                                            del atom_val_list[index]
+
+                        for index, atom in enumerate(ranges_list[range_name]['current_atoms']):
+                            del ranges_list[range_name]['current_atoms'][index]
+
+
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
+        self.redraw_range_list()
+        main_window.selected_residues_list_object.redraw_res_list()
+
+
+    def add_all_atoms_by_range(self):
+        
+        global atom_val_list
+
+        for item in self.selectedItems():
+
+            for range_name, range_list in ranges_list.items():
+
+                if range_name == item.my_range['range_number']:
+
+                    for atom_name in ranges_list[range_name]['range']:
+
+                        if not [point for point in atom_val_list if point == atom_name['atomval']]:
+                            atom_val_list.append( atom_name['atomval'])
+                            atom_val_list = sorted(atom_val_list, key=lambda item: atom_name['atomval'])
+
+                        if not [point for point in ranges_list[range_name]["current_atoms"] if point == atom_name['atomname']]:
+                            ranges_list[range_name]["current_atoms"].append(atom_name['atomname'])
+
+
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
+
+        self.redraw_range_list()
+        main_window.selected_residues_list_object.redraw_res_list()
+
+
+
+    def delete_all_atoms_by_range(self):
+
+        global atom_val_list
+
+        for_deleting = []
+
+
+        for item in self.selectedItems():
+
+            for range_name, range_list in ranges_list.items():
+
+                if range_name == item.my_range['range_number']:
+
+                    for atom_name in ranges_list[range_name]['range']:
+
+                        for_deleting.append(atom_name['atomval'])
+
+                        for index, val in enumerate(atom_val_list):
+                            for point in for_deleting:
+                                if point == val:
+                                    del atom_val_list[index]
+
+                        for index, atom_name in enumerate(ranges_list[range_name]['current_atoms']):
+                            del ranges_list[range_name]['current_atoms'][index]
+
+
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
+
+        self.redraw_range_list()
+        main_window.selected_residues_list_object.redraw_res_list()
+
+
 
     # deleting of items in rows
     def keyPressEvent(self, event):
 
-        global all_ranges
         global ranges_list
         global atom_val_list
 
 
         super(SelectedRangeList, self).keyPressEvent(event)
         if event.key() == QtCore.Qt.Key_Delete:
+
             for item in self.selectedItems():
                
                 # update the selected ranges list when deleting
-
-                # print(dir(item))
-
                 for range_name, range_list in list(ranges_list.items()):
 
                     if range_name == item.my_range['range_number']:
-
                         del ranges_list[range_name]
-
-                print(ranges_list.keys())
                 
 
                 self.takeItem(self.row(item)) # delete the row visually
 
-                # clear corresponding atoms out of memory
 
+                # clear corresponding atoms out of memory
                 temp_atom_list = []
+
                 for index, atom in enumerate(atom_val_list):
 
                     for range_name, range_list in list(ranges_list.items()):
+
                         for atom in ranges_list[range_name]['range']:
                         
                             if atom == atom['atomval']:
                                 temp_atom_list.append(atom_val_list[index])
 
                 atom_val_list = temp_atom_list
+
+            atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+            
+            print('[your_chosen_atoms]')
+            print(atom_val_list_out)
+            main_window.reply_log_object.append("full chosen atoms list:")
+            main_window.reply_log_object.append(str(atom_val_list_out))
 
 
         self.redraw_range_list()
@@ -1452,53 +1576,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
             app.quit()
 
-
-#     def range_button_clicked(self):
-#         global []
-#         global gro_residue_val
-#         from_input = self.from_res.text()
-#         to_input = self.to_res.text()
-
-#         min_res = min(gro_residue_val)
-#         max_res = max(gro_residue_val)
-
-#         print('min res, max res:')
-#         print(min_res , max_res)
-
-
-#         if (int(from_input)) < min_res or (int(to_input)) > max_res:
-
-#             print("Error: number entered out of bounds")
-#             self.reply_log_object.append("Error: number entered out of bounds")
-
-#         else:
-#             temp_res_range = list(range(int(from_input), int(to_input) + 1))
-
-
-#             print(temp_res_range)
-
-#             self.reply_log_object.append("residues range:")
-#             self.reply_log_object.append(str(temp_res_range))
-
-#             for i in temp_res_range:
-#                 num = i
-#                 for index, select_res in enumerate(gro_residue_val):
-#                     if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
-#                         [].append(
-#                             {
-#                                 "resval":gro_residue_val[index], 
-#                                 "resname":gro_residue_name[index], 
-#                                 "atomname":gro_atom_name[index], 
-#                                 "atomval":gro_atom_number[index]
-#                             }
-#                         )
-#                 [] = sorted([], key=lambda item: item["atomval"])
-        
-
-
-
-
-
+     
 
 
 
@@ -1509,6 +1587,5 @@ main_window.move(50, 60)
 main_window.resize(1500, 1000)
 main_window.show()
 main_window.raise_()
-
 
 sys.exit(app.exec_())

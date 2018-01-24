@@ -46,20 +46,14 @@ The ranges feature is linked to 'by point' feature; if you have points chosen al
 
 Priority
 
-- allow for multiple ranges work - done, need to tidy
-- track of which atoms are selected - done, need to tidy
+- saving the session for future load
 
 - sorting of ranges in the window
-- visual feedback in the hamster log
 - re-designing window wiew for clarity
-- adding selections of 'default' and 'all' atoms for ranges
 - prevent range duplicates and overlapping ranges
 - sorting of atoms for ranges
 
--general debugging
-
-
-- generation of posres.itp along with .ndx files -> done, tidying stage
+- general debugging
 
 - fix column selection
 
