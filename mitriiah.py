@@ -168,30 +168,58 @@ def saving_and_output():
             if s >= 10000:
                 out.write(" %s     1  1000  1000  1000\n" % s)
 
+
+def save_variables():
     
+    saved_vars = {}
+    saved_vars['x_a_res'] = x_a_res
+    saved_vars['y_a_rmsf'] = y_a_rmsf
+    saved_vars['selected_points'] = selected_points 
+    saved_vars['selected_points_x'] = selected_points_x 
+    saved_vars['selected_points_y'] = selected_points_y 
+    saved_vars['gro_residue_val'] = gro_residue_val
+    saved_vars['gro_residue_name'] = gro_residue_name
+    saved_vars['gro_atom_name'] = gro_atom_name
+    saved_vars['gro_atom_number '] = gro_atom_number 
+    saved_vars['selected_residues'] = selected_residues 
+    saved_vars['atom_val_list'] = atom_val_list 
+    saved_vars['ranges_list'] = ranges_list 
+    saved_vars['n'] = n 
 
-# def save_variables(globals_=None):
-#     if globals_ is None:
-#         globals_ = globals()
-#     filename = 'shelve.out'
-#     my_shelf = shelve.open(filename, 'n')
-#     for key, value in globals_.items():
-#         if not key.startswith('__'):
-#             try:
-#                 my_shelf[key] = value
-#             except Exception:
-#                 print('ERROR shelving: "%s"' % key)
-#             else:
-#                 print('shelved: "%s"' % key)
-#     my_shelf.close()
+
+    gro_filename = args.my_gro_filename
+    my_shelf = shelve.open(gro_filename[:-4] + "_saved_session.out", 'n')
+
+    for key, value in saved_vars.items():
+
+        if not key.startswith('__'):
+            try:
+                my_shelf[key] = value
+            except Exception:
+                print('ERROR saving: "%s"' % key)
+            
+    my_shelf.close()
+
+    print('saved session')
+    main_window.reply_log_object.append("session saved")
 
 
-# def open_variables():
-#     filename = 'shelve.out'
-#     my_shelf = shelve.open(filename)
-#     for key in my_shelf:
-#         globals()[key]=my_shelf[key]
-#     my_shelf.close()
+def open_variables():
+
+    gro_filename = args.my_gro_filename
+    my_shelf = shelve.open(gro_filename[:-4] + "_saved_session.out")
+    for key in my_shelf:
+        globals()[key]=my_shelf[key]
+
+    main_window.graph_object.redraw_graph()
+    main_window.selected_points_list_object.add_points()
+    main_window.selected_residues_list_object.redraw_res_list() 
+    main_window.select_ranges_list_object.redraw_range_list()
+
+    my_shelf.close()
+
+    print("previous session loaded")
+    main_window.reply_log_object.append("previous session loaded")
 
 
 
@@ -246,12 +274,8 @@ def add_point_by_mouse(event):
 
 
         # add selected_points (residue value and rmsf value) to the selected_points_list (also displayed)
-        main_window.selected_points_list_object.clear()
-        for point in selected_points:
-            list_item = QtGui.QListWidgetItem("res: %d rmsf: %s" % (point['x'], point['y']))
-            list_item.my_point = point # keep 'point' info for reference
-              
-            main_window.selected_points_list_object.addItem( list_item ) # add visually line by line
+        
+        main_window.selected_points_list_object.add_points()
 
 
         #refresh the list display
@@ -333,6 +357,14 @@ class GraphWindow(QtGui.QDialog):
 
             app.quit()
 
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()
+
+
     # close down all open windows when this one is closed -- is it needed??
     def closeEvent(self, event):
         app.quit()
@@ -343,30 +375,37 @@ class ReplyLog(QtGui.QTextEdit):
     def __init__(self):
         super(ReplyLog, self).__init__()
 
-        self.append(" Hamster log:")
+        self.append(" Hello... hamster is running. To start right-click on the graph, or input a range. ")
         self.setReadOnly(True)
 
-        # define the keyboard shortcuts
-    def keyPressEvent(self, event):
+    # define the keyboard shortcuts
+    # def keyPressEvent(self, event):
 
-        super(ReplyLog, self).keyPressEvent(event)
+    #     super(ReplyLog, self).keyPressEvent(event)
 
-        key_shortcuts(event)
+    #     # key_shortcuts(event)
 
-        # atom output shortcut
-        if event.key() == QtCore.Qt.Key_P:
+    #     # atom output shortcut
+    #     if event.key() == QtCore.Qt.Key_P:
             
-            print('Saved atom list')
-            main_window.reply_log_object.append("Saved atom list")
+    #         print('Saved atom list')
+    #         main_window.reply_log_object.append("Saved atom list")
 
-            saving_and_output()
+    #         saving_and_output()
 
-        # quit the program shortcut
-        if event.key() == QtCore.Qt.Key_Q:
+    #     # quit the program shortcut
+    #     if event.key() == QtCore.Qt.Key_Q:
             
-            print('Hamster ran out!')
+    #         print('Hamster ran out!')
 
-            app.quit()
+    #         app.quit()
+
+    #     if event.key() == QtCore.Qt.Key_S:
+    #         save_variables()
+
+
+    #     if event.key() == QtCore.Qt.Key_L:
+    #         open_variables()
 
 
 
@@ -849,26 +888,95 @@ class MainGuiWindow(QtGui.QWidget):
         rmsf_selection_label =  QtGui.QLabel("Selection by RMSF Window:")
 
         # helper section
-        help_info = QtGui.QLabel("Shortcuts: 'v' - select atoms ; 'b' - deselect atoms ; 'del' - delete selected residues ; 'p' - print selected atom numbers")
+        help_info = QtGui.QLabel("Shortcuts: ")
 
+        help_info_2 = QtGui.QLabel("'v' - select atoms")
+        help_info_3 = QtGui.QLabel("'b' - deselect atoms ")
+        help_info_4 = QtGui.QLabel("'del' - delete selected residues") 
+        help_info_5 = QtGui.QLabel("'p' - print selected atom numbers")
+        help_info_6 = QtGui.QLabel("'s' - save session") 
+        help_info_7 = QtGui.QLabel("'l' - load session")
+
+        # description = QtGui.QLabel("  ")
+
+
+        log_label = QtGui.QLabel("Hamster Log: ")
 
         
         ### containers ###
 
+        # info
+        info_box1 = QtGui.QVBoxLayout()
+
+        info_box1.addWidget(help_info_2)
+        info_box1.addWidget(help_info_3)
+
+        info_box2 = QtGui.QVBoxLayout()
+        info_box2.addWidget(help_info_4)
+        info_box2.addWidget(help_info_5)
+
+        info_box3 = QtGui.QVBoxLayout()
+        info_box3.addWidget(help_info_6)
+        info_box3.addWidget(help_info_7)
+
+
+
+        info_box = QtGui.QHBoxLayout()
+        info_box.addLayout(info_box1)
+        info_box.addLayout(info_box2)
+        info_box.addLayout(info_box3)
+
+
+        info_box_frame = QtGui.QGroupBox()
+        info_box_frame.setStyleSheet("QGroupBox { border: 1px solid gray; margin-top: 0.5em} QGroupBox::title {    subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}")
+        
+        # sets the margins
+        left, top, right, bottom = 10, 10, 10, 10
+        info_box_frame.setContentsMargins(left, top, right, bottom)
+
+        info_box_frame.setTitle("Shortcuts")
+        info_box_frame.setLayout(info_box)
+
+
+
+        # box_with_label = QtGui.QVBoxLayout()
+        # box_with_label.addWidget(help_info)
+        # box_with_label.addLayout(info_box)
+
+        reply_log_layout = QtGui.QVBoxLayout()
+        reply_log_layout.addWidget(self.reply_log_object)
+
+        reply_log_box = QtGui.QGroupBox()
+        reply_log_box.setStyleSheet("QGroupBox { border: 1px solid gray; margin-top: 0.5em} QGroupBox::title {    subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}")
+        
+        # sets the margins
+        left, top, right, bottom = 10, 10, 10, 10
+        reply_log_box.setContentsMargins(left, top, right, bottom)
+
+        reply_log_box.setTitle("Hamster Log")
+        reply_log_box.setLayout(reply_log_layout)
 
         # helper bar (below graph)
         helper_bar = QtGui.QGridLayout()
         
-        helper_bar.addWidget(self.reply_log_object, 1, 0)
-        helper_bar.addWidget(help_info, 2, 0)
+        # helper_bar.addWidget(log_label, 0, 0, 1, 1)
+        # helper_bar.addWidget(self.reply_log_object, 2, 0, 3, 1)
+
+        helper_bar.addWidget(reply_log_box, 1, 0, 6, 1)
+
+        # helper_bar.addWidget(description, 5, 0, 1, 1)
+        helper_bar.addWidget(info_box_frame, 7 , 0, 2, 1)
 
 
 
         # graph window
-        graph_window_layout = QtGui.QVBoxLayout()
+        # graph_window_layout = QtGui.QVBoxLayout()
 
-        graph_window_layout.addWidget(self.graph_object)
-        graph_window_layout.addLayout(helper_bar)
+        graph_window_layout = QtGui.QGridLayout()
+
+        graph_window_layout.addWidget(self.graph_object, 0, 0, 2, 1)
+
+        graph_window_layout.addLayout(helper_bar, 4, 0, 2, 1)
 
 
 
@@ -939,6 +1047,9 @@ class MainGuiWindow(QtGui.QWidget):
         range_options.addWidget(self.select_button)
 
 
+
+
+
         # radiobutton layout
         range_radiobutton_layout = QtGui.QVBoxLayout()
 
@@ -970,18 +1081,41 @@ class MainGuiWindow(QtGui.QWidget):
 
 
         ## container for all the buttons
-        ranges_buttons = QtGui.QVBoxLayout()
+        ranges_buttons_sel = QtGui.QVBoxLayout()
 
         # range selection
-        ranges_buttons.addWidget(range_sel_label)
-        ranges_buttons.addLayout(range_options)
+        ranges_buttons_sel.addWidget(range_sel_label)
+        ranges_buttons_sel.addLayout(range_options)
 
-        # radiobuttons
-        ranges_buttons.addLayout(selectors)
+        
+
+        ranges_buttons_specific = QtGui.QVBoxLayout()
 
         # specific atom selection
-        ranges_buttons.addWidget(range_atom_label)
-        ranges_buttons.addLayout(specific_atoms_options)
+        ranges_buttons_specific.addWidget(range_atom_label)
+        ranges_buttons_specific.addLayout(specific_atoms_options)
+
+
+        ranges_buttons = QtGui.QGridLayout()
+
+        verticalSpacer = QtGui.QSpacerItem(10, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+
+        ranges_buttons.addItem(verticalSpacer)
+
+        ranges_buttons.addLayout(ranges_buttons_sel, 0, 0, 1, 1)
+
+        
+        ranges_buttons.addItem(verticalSpacer)
+
+        # radiobuttons
+        ranges_buttons.addLayout(selectors, 3, 0, 1, 1)
+
+        ranges_buttons.addItem(verticalSpacer)
+
+        ranges_buttons.addLayout(ranges_buttons_specific, 7, 0, 1, 1)
+        ranges_buttons.addItem(verticalSpacer)
+
+
 
 
         ## range layout
@@ -1026,10 +1160,11 @@ class MainGuiWindow(QtGui.QWidget):
 
         ### main layout ##
 
-        main_layout = QtGui.QHBoxLayout()
+        # main_layout = QtGui.QHBoxLayout()
+        main_layout = QtGui.QGridLayout()
 
-        main_layout.addLayout(graph_window_layout)
-        main_layout.addLayout(atom_and_range)
+        main_layout.addLayout(graph_window_layout, 0, 0 , 1, 3)
+        main_layout.addLayout(atom_and_range, 0, 4 , 1, 2)
 
 
         self.setLayout(main_layout)
@@ -1053,12 +1188,14 @@ class MainGuiWindow(QtGui.QWidget):
         if event.key() == QtCore.Qt.Key_Q:
             
             print('Hamster ran out!')
-            # save_variables()
-
             app.quit()
 
-        # if event.key() == QtCore.Qt.Key_L:
-        #     open_variables()
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()
 
 
 
@@ -1067,6 +1204,19 @@ class SelectedPointsList(QtGui.QListWidget):
     def __init__(self, selected_points):
         super(SelectedPointsList, self).__init__()
     
+
+    def add_points(self):
+
+        self.clear()
+        for point in selected_points:
+            list_item = QtGui.QListWidgetItem("res: %d rmsf: %s" % (point['x'], point['y']))
+            list_item.my_point = point # keep 'point' info for reference
+              
+            self.addItem( list_item ) # add visually line by line
+
+
+
+
 
     # deleting of items in rows
     def keyPressEvent(self, event):
@@ -1135,6 +1285,14 @@ class SelectedPointsList(QtGui.QListWidget):
             print('Hamster ran out!')
 
             app.quit()
+
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()
+
 
 
 # object responsible for handling gro vars list (the selected residues list)
@@ -1245,6 +1403,14 @@ class SelectedResiduesList(QtGui.QListWidget):
             print('Hamster ran out!')
 
             app.quit()
+
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()
+
 
 # object containing the ranges functionality
 class SelectedRangeList(QtGui.QListWidget):
@@ -1575,6 +1741,14 @@ class SelectedRangeList(QtGui.QListWidget):
             print('Hamster ran out!')
 
             app.quit()
+
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()
+
 
      
 
