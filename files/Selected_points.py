@@ -1,10 +1,21 @@
-# object containing the selected points list
+# object containing the selected points from the graph list
 class SelectedPointsList(QtGui.QListWidget):
     def __init__(self, selected_points):
         super(SelectedPointsList, self).__init__()
-
-        self.setWindowTitle('Selected Points')
     
+
+    def add_points(self):
+
+        self.clear()
+        for point in selected_points:
+            list_item = QtGui.QListWidgetItem("res: %d rmsf: %s" % (point['x'], point['y']))
+            list_item.my_point = point # keep 'point' info for reference
+              
+            self.addItem( list_item ) # add visually line by line
+
+
+
+
 
     # deleting of items in rows
     def keyPressEvent(self, event):
@@ -14,7 +25,8 @@ class SelectedPointsList(QtGui.QListWidget):
 
 
         super(SelectedPointsList, self).keyPressEvent(event)
-        # https://stackoverflow.com/questions/38507011/implementing-keypressevent-in-qwidget
+
+
         if event.key() == QtCore.Qt.Key_Delete:
             for item in self.selectedItems():
 
@@ -45,9 +57,19 @@ class SelectedPointsList(QtGui.QListWidget):
 
                 atom_val_list = temp_atom_list
 
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
         main_window.graph_object.redraw_graph()
         main_window.selected_residues_list_object.redraw_res_list()
 
+        
         # atom numbers printing and saving shortcut
         if event.key() == QtCore.Qt.Key_P:
             
@@ -62,3 +84,10 @@ class SelectedPointsList(QtGui.QListWidget):
             print('Hamster ran out!')
 
             app.quit()
+
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()

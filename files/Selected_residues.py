@@ -3,9 +3,8 @@ class SelectedResiduesList(QtGui.QListWidget):
     def __init__(self, selected_residues):
         super(SelectedResiduesList, self).__init__()
 
-        self.setWindowTitle('Selected Residues and atom selection')
-
         self.redraw_res_list()
+
 
     # populate the list window and keep it updated
     def redraw_res_list(self):
@@ -64,6 +63,14 @@ class SelectedResiduesList(QtGui.QListWidget):
                     atom_val_list.append( item.my_res_atom['atomval'] )
                     atom_val_list = sorted(atom_val_list, key=lambda item: item)
 
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
+
 
         # delete desired atoms from the atom list by pressing 'b'
         if event.key() == QtCore.Qt.Key_B:
@@ -75,6 +82,15 @@ class SelectedResiduesList(QtGui.QListWidget):
                 for index, atm in enumerate(atom_val_list):
                     if( atm == item.my_res_atom['atomval']):
                         del atom_val_list[index]
+
+
+        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        main_window.reply_log_object.append("full chosen atoms list:")
+        main_window.reply_log_object.append(str(atom_val_list_out))
 
         # print and save the atom values by pressing 'p'
         if event.key() == QtCore.Qt.Key_P:
@@ -90,3 +106,10 @@ class SelectedResiduesList(QtGui.QListWidget):
             print('Hamster ran out!')
 
             app.quit()
+
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()

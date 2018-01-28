@@ -3,6 +3,8 @@
 import sys
 import os
 import argparse
+import atexit
+import signal
 
 from PyQt4 import QtCore, QtGui
 import re
@@ -283,130 +285,6 @@ def add_point_by_mouse(event):
         main_window.graph_object.redraw_graph()
     
 
-# Space in which the rmsf figure is drawn
-class GraphWindow(QtGui.QDialog):
-    def __init__(self, x_a_res, y_a_rmsf):
-        super(GraphWindow, self).__init__()
-
-        self.main()
-  
-        self.redraw_graph()
-
-    # set the drawing space
-    def main(self):
-        # a figure instance to plot on
-        self.figure = Figure(figsize = (5,4))
-
-        # this is the Canvas Widget that displays the `figure`. it takes the `figure` instance as a parameter to __init__
-        self.canvas = FigureCanvas(self.figure)
-
-        # this is the Navigation widget. it takes the Canvas widget and a parent
-        self.toolbar = NavigationToolbar(self.canvas, self)
-        
-        # set the layout
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-
-        self.setLayout(layout)
-
-        # create an axis
-        ax = self.figure.add_subplot(111)
-        self.ax = ax
-
-        # use the selecter on graph
-        cid = self.figure.canvas.mpl_connect('button_press_event', add_point_by_mouse)
-
-
-    # plot the graph
-    def redraw_graph(self):
-
-        self.ax.clear() # discards the old graph
-
-        self.ax.plot(x_a_res,y_a_rmsf, c='k') # plot the rmsf graph
-
-        # plot every selected point
-        for point in selected_points:
-            self.ax.plot(point['x'],point['y'], c='r', marker='o')
-
-        self.ax.set_title("RMSF")    
-        self.ax.set_xlabel('Residue number')
-        self.ax.set_ylabel('rmsf (nm)')
-
-        # refresh canvas
-        self.canvas.draw()
-
-    # define the keyboard shortcuts
-    def keyPressEvent(self, event):
-
-        super(GraphWindow, self).keyPressEvent(event)
-
-        # atom output shortcut
-        if event.key() == QtCore.Qt.Key_P:
-            
-            print('Saved atom list')
-            main_window.reply_log_object.append("Saved atom list")
-
-            saving_and_output()
-
-        # quit the program shortcut
-        if event.key() == QtCore.Qt.Key_Q:
-            
-            print('Hamster ran out!')
-
-
-            app.quit()
-
-        if event.key() == QtCore.Qt.Key_S:
-            save_variables()
-
-
-        if event.key() == QtCore.Qt.Key_L:
-            open_variables()
-
-
-    # close down all open windows when this one is closed -- is it needed??
-    def closeEvent(self, event):
-        app.quit()
-
-
-
-class ReplyLog(QtGui.QTextEdit):
-    def __init__(self):
-        super(ReplyLog, self).__init__()
-
-        self.append(" Hello... hamster is running. To start right-click on the graph, or input a range. ")
-        self.setReadOnly(True)
-
-    # define the keyboard shortcuts
-    # def keyPressEvent(self, event):
-
-    #     super(ReplyLog, self).keyPressEvent(event)
-
-    #     # key_shortcuts(event)
-
-    #     # atom output shortcut
-    #     if event.key() == QtCore.Qt.Key_P:
-            
-    #         print('Saved atom list')
-    #         main_window.reply_log_object.append("Saved atom list")
-
-    #         saving_and_output()
-
-    #     # quit the program shortcut
-    #     if event.key() == QtCore.Qt.Key_Q:
-            
-    #         print('Hamster ran out!')
-
-    #         app.quit()
-
-    #     if event.key() == QtCore.Qt.Key_S:
-    #         save_variables()
-
-
-    #     if event.key() == QtCore.Qt.Key_L:
-    #         open_variables()
-
 
 
 
@@ -660,39 +538,50 @@ class MainGuiWindow(QtGui.QWidget):
         temp_list = []
 
         # input restrictions
-        if (int(from_input)) < min_res or (int(to_input)) > max_res:
+        # try:
+        #     from_input == ""
+        # except ValueError:
+        #     print("Error: ")      # or whatever
 
-            print("Error: number entered out of bounds")
-            self.reply_log_object.append("Error: number entered out of bounds")
+        if len(from_input) < 1 or len(to_input) < 1:
+            print("Error: No range value(s) entered")
+            self.reply_log_object.append("Error: No range value(s) entered")
 
         else:
-            temp_res_range = list(range(int(from_input), int(to_input) + 1))
+
+            if (int(from_input)) < min_res or (int(to_input)) > max_res:
+
+                print("Error: number entered out of bounds")
+                self.reply_log_object.append("Error: number entered out of bounds")
+
+            else:
+                temp_res_range = list(range(int(from_input), int(to_input) + 1))
 
 
-            # setting of the data structure for each range added
-            for i in temp_res_range:
-                
-                num = i
+                # setting of the data structure for each range added
+                for i in temp_res_range:
+                    
+                    num = i
 
-                for index, select_res in enumerate(gro_residue_val):
-                    if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
-                        temp_list.append( {
-                                "resval":gro_residue_val[index], 
-                                "resname":gro_residue_name[index], 
-                                "atomname":gro_atom_name[index], 
-                                "atomval":gro_atom_number[index]
-                                 } )
+                    for index, select_res in enumerate(gro_residue_val):
+                        if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
+                            temp_list.append( {
+                                    "resval":gro_residue_val[index], 
+                                    "resname":gro_residue_name[index], 
+                                    "atomname":gro_atom_name[index], 
+                                    "atomval":gro_atom_number[index]
+                                     } )
 
-            ranges_list["range%s" % n] = {}
-            ranges_list["range%s" % n]["range"] = temp_list
-            ranges_list["range%s" % n]["current_atoms"] = []
-            ranges_list["range%s" % n].update({
-                                "range_number":'range%s' % n,
-                                "from_val":from_input,
-                                "to_val":to_input
-                                })
-           
-            n += 1 
+                ranges_list["range%s" % n] = {}
+                ranges_list["range%s" % n]["range"] = temp_list
+                ranges_list["range%s" % n]["current_atoms"] = []
+                ranges_list["range%s" % n].update({
+                                    "range_number":'range%s' % n,
+                                    "from_val":from_input,
+                                    "to_val":to_input
+                                    })
+               
+                n += 1 
 
 
 
@@ -1196,6 +1085,132 @@ class MainGuiWindow(QtGui.QWidget):
 
         if event.key() == QtCore.Qt.Key_L:
             open_variables()
+
+
+
+# Space in which the rmsf figure is drawn
+class GraphWindow(QtGui.QDialog):
+    def __init__(self, x_a_res, y_a_rmsf):
+        super(GraphWindow, self).__init__()
+
+        self.main()
+  
+        self.redraw_graph()
+
+    # set the drawing space
+    def main(self):
+        # a figure instance to plot on
+        self.figure = Figure(figsize = (5,4))
+
+        # this is the Canvas Widget that displays the `figure`. it takes the `figure` instance as a parameter to __init__
+        self.canvas = FigureCanvas(self.figure)
+
+        # this is the Navigation widget. it takes the Canvas widget and a parent
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        
+        # set the layout
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.canvas)
+
+        self.setLayout(layout)
+
+        # create an axis
+        ax = self.figure.add_subplot(111)
+        self.ax = ax
+
+        # use the selecter on graph
+        cid = self.figure.canvas.mpl_connect('button_press_event', add_point_by_mouse)
+
+
+    # plot the graph
+    def redraw_graph(self):
+
+        self.ax.clear() # discards the old graph
+
+        self.ax.plot(x_a_res,y_a_rmsf, c='k') # plot the rmsf graph
+
+        # plot every selected point
+        for point in selected_points:
+            self.ax.plot(point['x'],point['y'], c='r', marker='o')
+
+        self.ax.set_title("RMSF")    
+        self.ax.set_xlabel('Residue number')
+        self.ax.set_ylabel('rmsf (nm)')
+
+        # refresh canvas
+        self.canvas.draw()
+
+    # define the keyboard shortcuts
+    def keyPressEvent(self, event):
+
+        super(GraphWindow, self).keyPressEvent(event)
+
+        # atom output shortcut
+        if event.key() == QtCore.Qt.Key_P:
+            
+            print('Saved atom list')
+            main_window.reply_log_object.append("Saved atom list")
+
+            saving_and_output()
+
+        # quit the program shortcut
+        if event.key() == QtCore.Qt.Key_Q:
+            
+            print('Hamster ran out!')
+
+
+            app.quit()
+
+        if event.key() == QtCore.Qt.Key_S:
+            save_variables()
+
+
+        if event.key() == QtCore.Qt.Key_L:
+            open_variables()
+
+
+    # close down all open windows when this one is closed -- is it needed??
+    def closeEvent(self, event):
+        app.quit()
+
+
+
+class ReplyLog(QtGui.QTextEdit):
+    def __init__(self):
+        super(ReplyLog, self).__init__()
+
+        self.append(" Hello... hamster is running. To start right-click on the graph, or input a range. ")
+        self.setReadOnly(True)
+
+    # define the keyboard shortcuts
+    # def keyPressEvent(self, event):
+
+    #     super(ReplyLog, self).keyPressEvent(event)
+
+    #     # key_shortcuts(event)
+
+    #     # atom output shortcut
+    #     if event.key() == QtCore.Qt.Key_P:
+            
+    #         print('Saved atom list')
+    #         main_window.reply_log_object.append("Saved atom list")
+
+    #         saving_and_output()
+
+    #     # quit the program shortcut
+    #     if event.key() == QtCore.Qt.Key_Q:
+            
+    #         print('Hamster ran out!')
+
+    #         app.quit()
+
+    #     if event.key() == QtCore.Qt.Key_S:
+    #         save_variables()
+
+
+    #     if event.key() == QtCore.Qt.Key_L:
+    #         open_variables()
 
 
 
@@ -1763,3 +1778,64 @@ main_window.show()
 main_window.raise_()
 
 sys.exit(app.exec_())
+
+
+
+# class Application:
+#     def __init__(self):
+#         self.app = QtGui.QApplication(sys.argv)
+#         self.main_window = MainGuiWindow()
+
+#     def run(self):
+#         timer = QTimer()
+#         timer.start(500)
+#         timer.timeout.connect(lambda: None)
+
+#         self.main_window.move(50, 60)
+#         self.main_window.resize(1500, 1000)
+#         self.main_window.show()
+#         self.main_window.raise_()
+#         return self.app.exec_()
+
+#     def cleanup(self):
+#         self.gui.cleanup()
+
+# def main():
+#     app = Application()
+#     atexit.register(cleanup, app)
+#     sys.exit(app.run())
+
+
+
+
+
+
+# def main():
+#     # app = QApplication(sys.argv)
+#     app = QtGui.QApplication(sys.argv)
+#     # gui = Window()
+
+#     # Rejestracja funkcji, która wywoła się z końcem aplikacji
+#     atexit.register(cleanup, gui)
+
+#     # Pozwala interpreterowi uruchomić się co 500 ms,
+#     # dzięki czemu możemy przechwycić nadchodzące sygnały
+#     # (w przeciwnym wypadku Qt będzie je blokować).
+#     timer = QTimer()
+#     timer.start(500)
+#     timer.timeout.connect(lambda: None)
+
+#     main_window = MainGuiWindow()
+#     main_window.move(50, 60)
+#     main_window.resize(1500, 1000)
+#     main_window.show()
+#     main_window.raise_()
+
+#     sys.exit(app.exec_())
+
+
+
+
+# # Obsługa SIGINT (ctrl-c)
+# signal.signal(signal.SIGINT, interruptHandler)
+# main()
