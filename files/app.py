@@ -1,4 +1,3 @@
-# from Selected_points import SelectedPointsList as selected_points_list_object
 import shelve
 
 main_window = None
