@@ -1,3 +1,6 @@
+from PyQt4 import QtCore, QtGui
+
+
 class ReplyLog(QtGui.QTextEdit):
     def __init__(self):
         super(ReplyLog, self).__init__()

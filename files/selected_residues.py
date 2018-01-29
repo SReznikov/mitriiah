@@ -1,3 +1,9 @@
+from PyQt4 import QtCore, QtGui
+
+from reply_log import ReplyLog
+import app as app
+
+
 # object responsible for handling gro vars list (the selected residues list)
 class SelectedResiduesList(QtGui.QListWidget):
     def __init__(self, selected_residues):
@@ -10,12 +16,10 @@ class SelectedResiduesList(QtGui.QListWidget):
     def redraw_res_list(self):
         self.clear()
 
-        global atom_val_list
-        
         last_line = {'resval': None}
 
 
-        for val in selected_residues:
+        for val in app.selected_residues:
             res_item = QtGui.QListWidgetItem("Residue: %s" "  %s " "   Atom: %s " "  %s " % (val['resval'], val['resname'], val['atomname'], val['atomval']))
             res_item.my_res_atom = {'resval': val['resval'], 'atomval': val['atomval']}
 
@@ -33,7 +37,7 @@ class SelectedResiduesList(QtGui.QListWidget):
             last_line = current_line
 
 
-            for item in atom_val_list:
+            for item in app.atom_val_list:
                 if item == val['atomval']:
 
                     brush = QtGui.QBrush()
@@ -47,29 +51,26 @@ class SelectedResiduesList(QtGui.QListWidget):
     # define keyboard actions
     def keyPressEvent(self, event):
 
-        global selected_residues
-        global atom_val_list
-
         super(SelectedResiduesList, self).keyPressEvent(event)
         
-        # add desired atoms to atom_val_list by pressing 'v'
+        # add desired atoms to app.atom_val_list by pressing 'v'
         if event.key() == QtCore.Qt.Key_V:
             
             for item in self.selectedItems():
 
                 item.setTextColor(QtGui.QColor("red")) 
 
-                if not [point for point in atom_val_list if point == item.my_res_atom['atomval']]:
-                    atom_val_list.append( item.my_res_atom['atomval'] )
-                    atom_val_list = sorted(atom_val_list, key=lambda item: item)
+                if not [point for point in app.atom_val_list if point == item.my_res_atom['atomval']]:
+                    app.atom_val_list.append( item.my_res_atom['atomval'] )
+                    app.atom_val_list = sorted(app.atom_val_list, key=lambda item: item)
 
-        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
         
         print('[your_chosen_atoms]')
         print(atom_val_list_out)
-        main_window.reply_log_object.append("full chosen atoms list:")
-        main_window.reply_log_object.append(str(atom_val_list_out))
+        app.main_window.reply_log_object.append("full chosen atoms list:")
+        app.main_window.reply_log_object.append(str(atom_val_list_out))
 
 
         # delete desired atoms from the atom list by pressing 'b'
@@ -79,37 +80,37 @@ class SelectedResiduesList(QtGui.QListWidget):
                 item.setTextColor(QtGui.QColor("black"))
 
                 # update the selected atoms list when deleting
-                for index, atm in enumerate(atom_val_list):
+                for index, atm in enumerate(app.atom_val_list):
                     if( atm == item.my_res_atom['atomval']):
-                        del atom_val_list[index]
+                        del app.atom_val_list[index]
 
 
-        atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
         
         print('[your_chosen_atoms]')
         print(atom_val_list_out)
-        main_window.reply_log_object.append("full chosen atoms list:")
-        main_window.reply_log_object.append(str(atom_val_list_out))
+        app.main_window.reply_log_object.append("full chosen atoms list:")
+        app.main_window.reply_log_object.append(str(atom_val_list_out))
 
         # print and save the atom values by pressing 'p'
         if event.key() == QtCore.Qt.Key_P:
             
             print('Saved atom list from atom selection window')
-            main_window.reply_log_object.append("Saved atom list from atom selection window")
+            app.main_window.reply_log_object.append("Saved atom list from atom selection window")
 
-            saving_and_output()
+            app.saving_and_output()
 
         # quit the program by pressing 'q'
         if event.key() == QtCore.Qt.Key_Q:
             
             print('Hamster ran out!')
 
-            app.quit()
+            app.qapp.quit()
 
         if event.key() == QtCore.Qt.Key_S:
-            save_variables()
+            app.save_variables()
 
 
         if event.key() == QtCore.Qt.Key_L:
-            open_variables()
+            app.open_variables()
