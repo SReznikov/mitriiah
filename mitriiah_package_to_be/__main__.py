@@ -23,20 +23,20 @@ import argparse
 import atexit
 import signal
 
-# from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui
 import re
 import shelve
 
-# from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-# from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-from matplotlib.backends.qt_compat import QtCore, QtGui, is_pyqt5
-if is_pyqt5():
-    from matplotlib.backends.backend_qt5agg import (
-        FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
-else:
-    from matplotlib.backends.backend_qt4agg import (
-        FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+# from matplotlib.backends.qt_compat import QtCore, QtGui, is_pyqt5
+# if is_pyqt5():
+#     from matplotlib.backends.backend_qt5agg import (
+#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+# else:
+#     from matplotlib.backends.backend_qt4agg import (
+#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 
 

@@ -238,9 +238,11 @@ class MainGuiWindow(QtGui.QWidget):
 
         min_res = min(app.gro_residue_val)
         max_res = max(app.gro_residue_val)
-
+        app.to_vals.append(max_res + 1)
+        app.from_vals.append(min_res - 1)
    
         temp_list = []
+
 
 
         if len(from_input) < 1 or len(to_input) < 1:
@@ -255,83 +257,51 @@ class MainGuiWindow(QtGui.QWidget):
                 self.reply_log_object.append("Error: number entered out of bounds")
 
             else:
-                
-                # index_range = []
-                # x = 1
 
-                # while x < app.n:
-                #     index_range.append(x)
-                #     x = x + 1
-                # print(index_range)
-
-                # for i in index_range:
+                app.from_vals = sorted(app.from_vals)
+                app.to_vals = sorted(app.to_vals)
 
 
-                #     for item in app.ranges_list:
-                
-                #         if from_input >= app.ranges_list["range%s" % i]["from_val"]:
-                #             print("more than prev range")
-                #             print(app.ranges_list["range%s" % i]["from_val"])
-                #             y = i+1
-                #             print(x)
-
-                #             print(app.n)
-                #             pass
-
-                #         else:
-                #             print("not ok")
-
-                #         if app.n  == x:
-                #             print("were at 1st range")
+                for index, num in enumerate(app.to_vals):
+                    print(app.to_vals)
+                    if from_input < num:
+                        if to_input < app.from_vals[index]:
+                            print(app.from_vals[index])
                             
-
-                #         else:
-
-                #             if from_input >= app.ranges_list["range%s" % y]["to_val"]:
-                #                 print("less than next range")
-                #                 pass
-                #                 print("bigger than next range")
-
-                #             if from_input >= app.ranges_list["range%s" % y]["from_val"]:
-                #                 print("less than next range")
-                #                 pass
-                #                 print("bigger than next range")
-
-
-
-
 
                 #####
 
-                temp_res_range = list(range(int(from_input), int(to_input) + 1))
+                            temp_res_range = list(range(int(from_input), int(to_input) + 1))
+                            app.to_vals.append(to_input)
+                            app.from_vals.append(from_input)
 
+                            # setting of the data structure for each range added
+                            for i in temp_res_range:
+                                
+                                num = i
 
-                # setting of the data structure for each range added
-                for i in temp_res_range:
-                    
-                    num = i
+                                for index, select_res in enumerate(app.gro_residue_val):
+                                    if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
+                                        temp_list.append( {
+                                                "resval":app.gro_residue_val[index], 
+                                                "resname":app.gro_residue_name[index], 
+                                                "atomname":app.gro_atom_name[index], 
+                                                "atomval":app.gro_atom_number[index]
+                                                 } )
 
-                    for index, select_res in enumerate(app.gro_residue_val):
-                        if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
-                            temp_list.append( {
-                                    "resval":app.gro_residue_val[index], 
-                                    "resname":app.gro_residue_name[index], 
-                                    "atomname":app.gro_atom_name[index], 
-                                    "atomval":app.gro_atom_number[index]
-                                     } )
+                            app.ranges_list["range%s" % app.n] = {}
+                            app.ranges_list["range%s" % app.n]["range"] = temp_list
+                            app.ranges_list["range%s" % app.n]["current_atoms"] = []
+                            app.ranges_list["range%s" % app.n].update({
+                                                "range_number":'range%s' % app.n,
+                                                "from_val":from_input,
+                                                "to_val":to_input
+                                                })
+                           
+                            app.n += 1 
 
-                app.ranges_list["range%s" % app.n] = {}
-                app.ranges_list["range%s" % app.n]["range"] = temp_list
-                app.ranges_list["range%s" % app.n]["current_atoms"] = []
-                app.ranges_list["range%s" % app.n].update({
-                                    "range_number":'range%s' % app.n,
-                                    "from_val":from_input,
-                                    "to_val":to_input
-                                    })
-               
-                app.n += 1 
-
-
+                        else:
+                            print("error")
 
         app.main_window.select_ranges_list_object.redraw_range_list()
 
