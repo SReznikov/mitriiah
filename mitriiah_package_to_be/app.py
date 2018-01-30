@@ -61,6 +61,7 @@ def add_point_by_mouse(event):
                     lowest_point = y_a_rmsf[index]
                     x_of_lowest_point = x_a_res[index]
 
+
         # add the selected lowest point to the list of selected points   
         if not [point for point in selected_points if point['x'] == x_of_lowest_point]:
             if x_of_lowest_point != None and lowest_point != None: 
@@ -81,7 +82,6 @@ def add_point_by_mouse(event):
                         )
                         selected_residues = sorted(selected_residues, key=lambda item: item["atomval"])
                     
-
 
         # add selected_points (residue value and rmsf value) to the selected_points_list (also displayed)
         

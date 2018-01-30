@@ -255,6 +255,54 @@ class MainGuiWindow(QtGui.QWidget):
                 self.reply_log_object.append("Error: number entered out of bounds")
 
             else:
+                
+                # index_range = []
+                # x = 1
+
+                # while x < app.n:
+                #     index_range.append(x)
+                #     x = x + 1
+                # print(index_range)
+
+                # for i in index_range:
+
+
+                #     for item in app.ranges_list:
+                
+                #         if from_input >= app.ranges_list["range%s" % i]["from_val"]:
+                #             print("more than prev range")
+                #             print(app.ranges_list["range%s" % i]["from_val"])
+                #             y = i+1
+                #             print(x)
+
+                #             print(app.n)
+                #             pass
+
+                #         else:
+                #             print("not ok")
+
+                #         if app.n  == x:
+                #             print("were at 1st range")
+                            
+
+                #         else:
+
+                #             if from_input >= app.ranges_list["range%s" % y]["to_val"]:
+                #                 print("less than next range")
+                #                 pass
+                #                 print("bigger than next range")
+
+                #             if from_input >= app.ranges_list["range%s" % y]["from_val"]:
+                #                 print("less than next range")
+                #                 pass
+                #                 print("bigger than next range")
+
+
+
+
+
+                #####
+
                 temp_res_range = list(range(int(from_input), int(to_input) + 1))
 
 
