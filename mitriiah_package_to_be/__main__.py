@@ -115,6 +115,12 @@ with open(app.args.my_gro_filename) as gro_file:
             app.gro_atom_name.append(str(cols[1]))
             app.gro_atom_number.append(int(cols[2]))
 
+    app.min_res = min(app.gro_residue_val)
+    app.max_res = max(app.gro_residue_val)
+
+    app.to_vals.append(str(app.max_res + 1))
+    app.from_vals.append(str(app.min_res - 1))
+
 # class SystemTrayIcon(QtGui.QSystemTrayIcon):
 
 #     def __init__(self, icon, parent=None):

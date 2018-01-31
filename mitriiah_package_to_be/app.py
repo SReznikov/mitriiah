@@ -23,9 +23,13 @@ atom_val_list = [] # list of atom numbers obtained from user selection
 
 ## ranges
 ranges_list = {} # dict containing all the chosen ranges
-from_vals = []
-to_vals = []
+# from_vals = []
+# to_vals = []
 n = 1 # range counter
+
+to_vals = []
+from_vals = []
+numbers_in_ranges = []
 
 default_atoms = ["CA", "C", "N", "O"]
 

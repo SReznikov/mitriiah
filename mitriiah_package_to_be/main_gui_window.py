@@ -236,12 +236,42 @@ class MainGuiWindow(QtGui.QWidget):
         from_input = self.from_res.text()
         to_input = self.to_res.text()
 
-        min_res = min(app.gro_residue_val)
-        max_res = max(app.gro_residue_val)
-        app.to_vals.append(max_res + 1)
-        app.from_vals.append(min_res - 1)
+
    
-        temp_list = []
+        
+        def adding_range():
+
+
+            temp_list = []
+            temp_res_range = list(range(int(from_input), int(to_input) + 1))
+            # app.to_vals.append(to_input)
+            # app.from_vals.append(from_input)
+
+            # setting of the data structure for each range added
+            for i in temp_res_range:
+                
+                num = i
+
+                for index, select_res in enumerate(app.gro_residue_val):
+                    if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
+                        temp_list.append( {
+                                "resval":app.gro_residue_val[index], 
+                                "resname":app.gro_residue_name[index], 
+                                "atomname":app.gro_atom_name[index], 
+                                "atomval":app.gro_atom_number[index]
+                                 } )
+
+            app.ranges_list["range%s" % app.n] = {}
+            app.ranges_list["range%s" % app.n]["range"] = temp_list
+            app.ranges_list["range%s" % app.n]["current_atoms"] = []
+            app.ranges_list["range%s" % app.n].update({
+                                "range_number":'range%s' % app.n,
+                                "from_val":from_input,
+                                "to_val":to_input
+                                })
+            
+            app.n += 1 
+
 
 
 
@@ -251,57 +281,30 @@ class MainGuiWindow(QtGui.QWidget):
 
         else:
 
-            if (int(from_input)) < min_res or (int(to_input)) > max_res:
+            if (int(from_input)) < app.min_res or (int(to_input)) > app.max_res:
 
                 print("Error: number entered out of bounds")
                 self.reply_log_object.append("Error: number entered out of bounds")
 
+
             else:
 
-                app.from_vals = sorted(app.from_vals)
-                app.to_vals = sorted(app.to_vals)
+                if not app.ranges_list:
+                    adding_range()
 
+                else:
 
-                for index, num in enumerate(app.to_vals):
-                    print(app.to_vals)
-                    if from_input < num:
-                        if to_input < app.from_vals[index]:
-                            print(app.from_vals[index])
+                    for a_range in app.ranges_list:
+
+                        if to_input < app.ranges_list[a_range]["from_val"] or from_input > app.ranges_list[a_range]["to_val"]:
                             
+                            # adding_range()
 
-                #####
-
-                            temp_res_range = list(range(int(from_input), int(to_input) + 1))
-                            app.to_vals.append(to_input)
-                            app.from_vals.append(from_input)
-
-                            # setting of the data structure for each range added
-                            for i in temp_res_range:
-                                
-                                num = i
-
-                                for index, select_res in enumerate(app.gro_residue_val):
-                                    if select_res == num: # check if residue number of our point is in .gro and add other variables to the list
-                                        temp_list.append( {
-                                                "resval":app.gro_residue_val[index], 
-                                                "resname":app.gro_residue_name[index], 
-                                                "atomname":app.gro_atom_name[index], 
-                                                "atomval":app.gro_atom_number[index]
-                                                 } )
-
-                            app.ranges_list["range%s" % app.n] = {}
-                            app.ranges_list["range%s" % app.n]["range"] = temp_list
-                            app.ranges_list["range%s" % app.n]["current_atoms"] = []
-                            app.ranges_list["range%s" % app.n].update({
-                                                "range_number":'range%s' % app.n,
-                                                "from_val":from_input,
-                                                "to_val":to_input
-                                                })
-                           
-                            app.n += 1 
 
                         else:
-                            print("error")
+                            print("not ok")
+
+
 
         app.main_window.select_ranges_list_object.redraw_range_list()
 
