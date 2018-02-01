@@ -2,14 +2,10 @@
 
 ####Priority
 
-
-- sorting of ranges in the window
-
-- prevent range duplicates and overlapping ranges
-- sorting of atoms for ranges
-
 - general debugging
+- tidying the code
 
+- visual representation on the rmsf graph of the ranges selected
 
 
 ####Nice to have
@@ -19,7 +15,7 @@
 - ability to delete points from graph by clicking on them
 - possibly use table view instead of list view
 - add rectangle selector for conveniance
-- visual representation on the rmsf graph of the ranges selected
+
 
 ####Maybe will get there one day
 

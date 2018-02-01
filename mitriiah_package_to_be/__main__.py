@@ -20,7 +20,6 @@
 import sys
 import os
 import argparse
-import atexit
 import signal
 
 from PyQt4 import QtCore, QtGui
@@ -121,16 +120,12 @@ with open(app.args.my_gro_filename) as gro_file:
     app.to_vals.append(str(app.max_res + 1))
     app.from_vals.append(str(app.min_res - 1))
 
-# class SystemTrayIcon(QtGui.QSystemTrayIcon):
 
-#     def __init__(self, icon, parent=None):
-#         QtGui.QSystemTrayIcon.__init__(self, icon, parent)
-#         menu = QtGui.QMenu(parent)
-#         exitAction = menu.addAction("Exit")
-#         self.setContextMenu(menu)
+def signal_handler(signal, frame):
+    sys.exit(0)
 
 
-#############
+signal.signal(signal.SIGINT, signal_handler)
 
 def main():
 
@@ -141,25 +136,7 @@ def main():
     app.main_window.move(50, 60)
     app.main_window.resize(1500, 1000)
     app.main_window.setWindowTitle("mitriiah")
-    app.main_window.setWindowIcon(QtGui.QIcon("kitty.png"))
-
-    # w = QtGui.QWidget()
-    # trayIcon = SystemTrayIcon(QtGui.QIcon("kitty.jpg"), w)
-
-    # trayIcon.show()
-    # app.main_window.setWindowIcon(QtGui.setPixmap("hamster.png"))
-
-    # pic = QtGui.QLabel(app.main_window)
-    # pic.setGeometry(10, 10, 400, 100)
-    # #use full ABSOLUTE path to the image, not relative
-    # pic.setPixmap(QtGui.QPixmap(os.getcwd() + "/hamster.png"))
-
-
-    # w = QtGui.QWidget()
-    # w.resize(820, 240)
-    # w.setWindowTitle("Hello World!")
-    # w.setWindowIcon( QtGui.QIcon("hamster.png") )
-    # w.show()
+    app.main_window.setWindowIcon(QtGui.QIcon("hamster.jpg"))
 
     app.main_window.show()
     app.main_window.raise_()
@@ -169,92 +146,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-#############
-
-# app = QtGui.QApplication(sys.argv)
-
-# w = QtGui.QWidget()
-# trayIcon = SystemTrayIcon(QtGui.QIcon("Example1.ico"), w)
-# trayIcon.show()
-
-# sys.exit(app.exec_())
-
-
-
-# app = QtGui.QApplication(sys.argv)
-# window = QtGui.QMainWindow()
-# window.setGeometry(0, 0, 400, 200)
-
-
-# pic = QtGui.QLabel(window)
-# pic.setGeometry(10, 10, 400, 100)
-# #use full ABSOLUTE path to the image, not relative
-# pic.setPixmap(QtGui.QPixmap(os.getcwd() + "/logo.png"))
-
-# window.show()
-# sys.exit(app.exec_())
-
-
-
-# class Application:
-#     def __init__(self, app):
-#         self.app.qapp = QtGui.QApplication(sys.argv)
-#         self.app.main_window = MainGuiWindow()
-
-#     def run(self):
-#         timer = QTimer()
-#         timer.start(500)
-#         timer.timeout.connect(lambda: None)
-
-#         self.app.main_window.move(50, 60)
-#         self.app.main_window.resize(1500, 1000)
-#         self.app.main_window.show()
-#         self.app.main_window.raise_()
-#         return self.app.qapp.exec_()
-
-#     def cleanup(self):
-#         self.gui.cleanup()
-
-# def main():
-#     app.qapp = Application(app)
-#     atexit.register(cleanup, app.qapp)
-#     sys.exit(app.qapp.run())
-
-
-# main()
-
-# def main():
-#     # app = QApplication(sys.argv)
-#     # app = QtGui.QApplication(sys.argv)
-#     app.qapp = QtGui.QApplication(sys.argv)
-#     # gui = Window()
-
-#     # Rejestracja funkcji, która wywoła się z końcem aplikacji
-#     atexit.register(cleanup, gui)
-
-#     # Pozwala interpreterowi uruchomić się co 500 ms,
-#     # dzięki czemu możemy przechwycić nadchodzące sygnały
-#     # (w przeciwnym wypadku Qt będzie je blokować).
-#     timer = QTimer()
-#     timer.start(500)
-#     timer.timeout.connect(lambda: None)
-
-#     app.main_window = MainGuiWindow()
-#     app.main_window.move(50, 60)
-#     app.main_window.resize(1500, 1000)
-#     app.main_window.show()
-#     app.main_window.raise_()
-
-#     sys.exit(app.qapp.exec_())
-
-
-
-
-# # Obsługa SIGINT (ctrl-c)
-# signal.signal(signal.SIGINT, interruptHandler)
-# main()
 
 

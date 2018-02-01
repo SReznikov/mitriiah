@@ -47,7 +47,110 @@ class SelectedResiduesList(QtGui.QListWidget):
 
             self.addItem( res_item )
 
+    # add default atoms
+    def default_button_clicked(self):
 
+        for atom in app.default_atoms:
+
+            for item in app.selected_residues:
+
+                if item["atomname"] == atom:
+
+                    if not [point for point in app.atom_val_list if point == item['atomval']]:
+                            app.atom_val_list.append( item['atomval'] )
+                            app.atom_val_list = sorted(app.atom_val_list, key=lambda item: item)
+
+
+        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        app.main_window.reply_log_object.append("full chosen atoms list:")
+        app.main_window.reply_log_object.append(str(atom_val_list_out))
+
+
+        app.main_window.selected_residues_list_object.redraw_res_list()
+
+    # add all atoms
+    def all_button_clicked(self):
+
+        for item in app.selected_residues:
+
+            if not [point for point in app.atom_val_list if point == item['atomval']]:
+                    app.atom_val_list.append( item['atomval'] )
+                    app.atom_val_list = sorted(app.atom_val_list, key=lambda item: item)
+
+
+        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        app.main_window.reply_log_object.append("full chosen atoms list:")
+        app.main_window.reply_log_object.append(str(atom_val_list_out))
+
+
+        app.main_window.selected_residues_list_object.redraw_res_list()
+
+
+    # delete default atoms
+    def default_delete_button_clicked(self):
+    
+        for_deleting = []
+
+
+        for atom in app.default_atoms:
+
+            for item in app.selected_residues:
+
+                if item["atomname"] == atom:
+                    for_deleting.append(item['atomval'])
+
+
+                    for index, val in enumerate(app.atom_val_list):
+                        for point in for_deleting:
+                            if point == val:
+                                del app.atom_val_list[index]
+
+
+
+        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        app.main_window.reply_log_object.append("full chosen atoms list:")
+        app.main_window.reply_log_object.append(str(atom_val_list_out))
+
+
+        app.main_window.selected_residues_list_object.redraw_res_list()
+
+
+    # delete all atoms
+    def all_delete_button_clicked(self):
+    
+        for_deleting = []
+
+
+        for item in app.selected_residues:
+
+            for_deleting.append(item['atomval'])
+
+            for index, val in enumerate(app.atom_val_list):
+                for point in for_deleting:
+                    if point == val:
+                        del app.atom_val_list[index]
+
+
+        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        print('[your_chosen_atoms]')
+        print(atom_val_list_out)
+        app.main_window.reply_log_object.append("full chosen atoms list:")
+        app.main_window.reply_log_object.append(str(atom_val_list_out))
+
+
+        app.main_window.selected_residues_list_object.redraw_res_list()
+        
     # define keyboard actions
     def keyPressEvent(self, event):
 

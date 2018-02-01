@@ -18,7 +18,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
         for range_name, range_list in app.ranges_list.items():
 
-            range_item = QtGui.QListWidgetItem("%s : " " %s " "to" " %s " "atoms selected: " " %s"  % (range_name, range_list['from_val'], range_list['to_val'], range_list['current_atoms'] ))
+            range_item = QtGui.QListWidgetItem("range : " " %s " "to" " %s " " | " "atoms selected: " " %s"  % ( range_list['from_val'], range_list['to_val'], range_list['current_atoms'] ))
 
             range_item.my_range = {'range_number': range_name}
 

@@ -103,7 +103,7 @@ def add_point_by_mouse(event):
 def saving_and_output():
     #save index
     atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-    gro_filename = qapp.args.my_gro_filename
+    gro_filename = args.my_gro_filename
 
     print('[your_chosen_atoms]')
     print(atom_val_list_out)
