@@ -168,6 +168,7 @@ class MainGuiWindow(QtGui.QWidget):
 
             app.ranges_list = OrderedDict(sorted(app.ranges_list.items(), key = lambda x: x[1]["from_val"]))
             app.n += 1 
+            app.main_window.graph_object.redraw_graph()
 
         if len(from_input) < 1 or len(to_input) < 1:
             print("Error: No range value(s) entered")
@@ -231,7 +232,7 @@ class MainGuiWindow(QtGui.QWidget):
         self.default_range_radiobutton = QtGui.QRadioButton(self.default_button_title)
         self.all_range_radiobutton = QtGui.QRadioButton(self.all_button_title)
         self.specific_atm_range_radiobutton = QtGui.QRadioButton(self.specific_atm_range_radiobutton_title)
-        self.specific_atm_range_radiobutton.toggled.connect(self.select_range_btnstate)
+        self.specific_atm_range_radiobutton.toggled.connect(self.sepcific_radiobutton)
 
 
     # buttons linking to the buttonstate of radiobuttons
@@ -251,17 +252,7 @@ class MainGuiWindow(QtGui.QWidget):
 
         self.atoms_range_button_delete.clicked.connect(self.delete_range_btnstate)
 
-
-
-
-    # button states
-    def select_range_btnstate(self):
-        if self.default_range_radiobutton.isChecked() == True:
-            self.add_default_atoms_range()
-
-        if self.all_range_radiobutton.isChecked() == True:
-            app.main_window.select_ranges_list_object.add_all_atoms_by_range()
-
+    def sepcific_radiobutton(self):
         if self.specific_atm_range_radiobutton.isChecked() == True:
             self.atm_nam.setDisabled(False)
             self.select_atm_button.setDisabled(False)
@@ -271,6 +262,27 @@ class MainGuiWindow(QtGui.QWidget):
             self.atm_nam.setDisabled(True)
             self.select_atm_button.setDisabled(True)
             self.delete_atm_button.setDisabled(True)
+
+
+    # button states
+    def select_range_btnstate(self):
+        # if self.specific_atm_range_radiobutton.isChecked() == True:
+        #     self.atm_nam.setDisabled(False)
+        #     self.select_atm_button.setDisabled(False)
+        #     self.delete_atm_button.setDisabled(False)
+
+        # else:
+        #     self.atm_nam.setDisabled(True)
+        #     self.select_atm_button.setDisabled(True)
+        #     self.delete_atm_button.setDisabled(True)
+
+        if self.default_range_radiobutton.isChecked() == True:
+            self.add_default_atoms_range()
+
+        if self.all_range_radiobutton.isChecked() == True:
+            app.main_window.select_ranges_list_object.add_all_atoms_by_range()
+
+
             
 
     def delete_range_btnstate(self):

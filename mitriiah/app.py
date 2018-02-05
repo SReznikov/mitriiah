@@ -25,6 +25,9 @@ atom_val_list = [] # list of atom numbers obtained from user selection
 ranges_list = {} # dict containing all the chosen ranges
 # from_vals = []
 # to_vals = []
+# min_res = None
+# max_res = None
+
 n = 1 # range counter
 
 to_vals = []

@@ -62,6 +62,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
             self.redraw_range_list()
             app.main_window.selected_residues_list_object.redraw_res_list()
+            app.main_window.graph_object.redraw_graph()
 
     # deleting specific atoms
     def delete_atoms_by_range(self):
@@ -102,6 +103,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
         self.redraw_range_list()
         app.main_window.selected_residues_list_object.redraw_res_list()
+        app.main_window.graph_object.redraw_graph()
 
     
     def add_default_atoms_by_range(self):
@@ -298,6 +300,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
 
         self.redraw_range_list()
+        app.main_window.graph_object.redraw_graph()
 
         # atom numbers printing and saving shortcut
         if event.key() == QtCore.Qt.Key_P:

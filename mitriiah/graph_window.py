@@ -4,6 +4,8 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
+import matplotlib.patches as patches
+
 # from matplotlib.backends.qt_compat import QtCore, QtGui, is_pyqt5
 # if is_pyqt5():
 #     from matplotlib.backends.backend_qt5agg import (
@@ -63,9 +65,19 @@ class GraphWindow(QtGui.QDialog):
 
         self.ax.plot(app.x_a_res,app.y_a_rmsf, c='k') # plot the rmsf graph
 
+
         # plot every selected point
         for point in app.selected_points:
             self.ax.plot(point['x'],point['y'], c='r', marker='o')
+
+        # plot every range
+        for range_name, range_list in app.ranges_list.items():
+
+            x = app.ranges_list[range_name]['from_val']
+            w = (app.ranges_list[range_name]['to_val']) - (app.ranges_list[range_name]['from_val'])
+            t = (max(app.y_a_rmsf)) + 0.25
+
+            self.ax.add_patch(patches.Rectangle((x, -0.1), w, t, alpha = 0.2, facecolor = '#ffaa00'))
 
         self.ax.set_title("RMSF")    
         self.ax.set_xlabel('Residue number')

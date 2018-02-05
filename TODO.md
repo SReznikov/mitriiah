@@ -2,11 +2,7 @@
 
 ####Priority
 
-- general debugging
-- tidying the code
-
-- visual representation on the rmsf graph of the ranges selected
-
+- creating a package
 
 ####Nice to have
 

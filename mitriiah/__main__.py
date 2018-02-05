@@ -119,6 +119,8 @@ with open(app.args.my_gro_filename) as gro_file:
 
     app.to_vals.append(str(app.max_res + 1))
     app.from_vals.append(str(app.min_res - 1))
+   
+   
 
 
 def signal_handler(signal, frame):
@@ -136,7 +138,7 @@ def main():
     app.main_window.move(50, 60)
     app.main_window.resize(1500, 1000)
     app.main_window.setWindowTitle("mitriiah")
-    app.main_window.setWindowIcon(QtGui.QIcon("hamster.jpg"))
+    app.main_window.setWindowIcon(QtGui.QIcon(".hamster.jpg"))
 
     app.main_window.show()
     app.main_window.raise_()

@@ -1,4 +1,6 @@
 from PyQt4 import QtCore, QtGui
+import app as app
+
 
 
 class ReplyLog(QtGui.QTextEdit):
@@ -6,6 +8,8 @@ class ReplyLog(QtGui.QTextEdit):
         super(ReplyLog, self).__init__()
 
         self.append(" Hello... hamster is running. To start right-click on the graph, or input a range. ")
+        print("min/max residue: %s, %s" % (app.min_res, app.max_res))
+        self.append("min/max residue: %s, %s" % (app.min_res, app.max_res))
         self.setReadOnly(True)
 
     # define the keyboard shortcuts
