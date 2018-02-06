@@ -26,36 +26,120 @@ class SelectedPointsList(QtGui.QListWidget):
 
         super(SelectedPointsList, self).keyPressEvent(event)
 
+        for_deleting = []
+
         if event.key() == QtCore.Qt.Key_Delete:
             
             for item in self.selectedItems():
 
                 # update the selected points list when deleting
+
                 for index, point in enumerate(app.selected_points):
                     if( point['x'] == item.my_point['x']):
                         del app.selected_points[index]
 
-
-                temp_res_list = []
-
-                # update the selected residues list when deleting
-                for index, vals in enumerate(app.selected_residues):
-                    if (vals['resval'] != item.my_point['x']):
-                        
-                        temp_res_list.append( app.selected_residues[index] )
-                    
-                app.selected_residues = temp_res_list
                 self.takeItem(self.row(item)) # delete the row visually
 
-                # clear corresponding atoms out of memory
-                temp_atom_list = []
-                for index, atom in enumerate(app.atom_val_list):
-                    for val in app.selected_residues:
-                        
-                        if atom == val['atomval']:
-                            temp_atom_list.append(app.atom_val_list[index])
 
-                app.atom_val_list = temp_atom_list
+                # update list of atoms in the window
+                for index, vals in enumerate(app.selected_residues):
+                    # print(vals)
+
+                    if (vals['resval'] == item.my_point['x']):
+                        # print(item.my_point['x'])
+                        
+                        for_deleting.append( app.selected_residues[index] )
+                        # print(for_deleting)
+
+                    
+                        for index, val in enumerate(app.atom_val_list):
+
+                            for point in for_deleting:
+
+                                if point['atomval'] == val:
+
+                                    del app.atom_val_list[index]
+
+
+
+            
+                for point in for_deleting:
+                    for index, atoms in enumerate(app.selected_residues):
+                        if atoms['atomval'] == point['atomval']:
+                            del app.selected_residues[index]
+                            print(app.selected_residues)
+
+                        # for index, atoms in enumerate(app.selected_residues):
+                        #     for point in for_deleting:
+                        #         print(point)
+                        #         if point['atomval'] == vals['atomval']:
+                        #             del vals[index]
+
+
+
+                        # del app.selected_residues[index]
+
+
+                #         for index, atom in enumerate(app.atom_val_list):
+                #             for point in for_deleting:
+                #                 if point['atomval'] == atom:
+                #                     del app.atom_val_list[index]
+
+                #             for index, point in enumerate(app.selected_points):
+                #                 if( point['x'] == item.my_point['x']):
+                #                     del app.selected_points[index]
+
+                #         del app.selected_residues[index]
+
+
+
+                    # for index, point in enumerate(app.selected_points):
+                    #     if( point['x'] == item.my_point['x']):
+                    #         del app.selected_points[index]
+
+                
+
+
+
+
+
+                # temp_res_list = []
+
+                # # update the selected residues list when deleting
+                # for index, vals in enumerate(app.selected_residues):
+                #     if (vals['resval'] != item.my_point['x']):
+                        
+                #         temp_res_list.append( app.selected_residues[index] )
+                    
+                # # app.selected_residues = temp_res_list
+
+                # for index, vals in enumerate(app.selected_residues):
+                #     if (vals['resval'] == item.my_point['x']):
+                        
+                #         for_deleting.append( app.selected_residues[index] )
+                #         # print(for_deleting)
+
+
+                
+
+                # # clear corresponding atoms out of memory
+                # temp_atom_list = []
+                # for index, atom in enumerate(app.atom_val_list):
+                #     for point in for_deleting:
+                #         if point['atomval'] == atom:
+                #             del app.atom_val_list[index]
+
+
+
+                #     for val in app.selected_residues:
+                        
+                #         if atom == val['atomval']:
+                #             temp_atom_list.append(app.atom_val_list[index])
+
+                # app.atom_val_list = temp_atom_list
+
+
+
 
 
         atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
@@ -68,6 +152,7 @@ class SelectedPointsList(QtGui.QListWidget):
 
         app.main_window.graph_object.redraw_graph()
         app.main_window.selected_residues_list_object.redraw_res_list()
+        app.main_window.select_ranges_list_object.redraw_range_list()
 
         
         # atom numbers printing and saving shortcut

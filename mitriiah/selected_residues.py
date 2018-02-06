@@ -70,6 +70,7 @@ class SelectedResiduesList(QtGui.QListWidget):
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
+        app.main_window.select_ranges_list_object.redraw_range_list()
 
     # add all atoms
     def all_button_clicked(self):
@@ -90,6 +91,7 @@ class SelectedResiduesList(QtGui.QListWidget):
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
+        app.main_window.select_ranges_list_object.redraw_range_list()
 
 
     # delete default atoms
@@ -123,6 +125,7 @@ class SelectedResiduesList(QtGui.QListWidget):
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
+        app.main_window.select_ranges_list_object.redraw_range_list()
 
 
     # delete all atoms
@@ -150,6 +153,7 @@ class SelectedResiduesList(QtGui.QListWidget):
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
+        app.main_window.select_ranges_list_object.redraw_range_list()
         
     # define keyboard actions
     def keyPressEvent(self, event):
@@ -168,13 +172,13 @@ class SelectedResiduesList(QtGui.QListWidget):
                     app.atom_val_list = sorted(app.atom_val_list, key=lambda item: item)
 
         atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-
+        app.main_window.select_ranges_list_object.redraw_range_list()
         
         print('[your_chosen_atoms]')
         print(atom_val_list_out)
         app.main_window.reply_log_object.append("full chosen atoms list:")
         app.main_window.reply_log_object.append(str(atom_val_list_out))
-
+        
 
         # delete desired atoms from the atom list by pressing 'b'
         if event.key() == QtCore.Qt.Key_B:
@@ -186,7 +190,7 @@ class SelectedResiduesList(QtGui.QListWidget):
                 for index, atm in enumerate(app.atom_val_list):
                     if( atm == item.my_res_atom['atomval']):
                         del app.atom_val_list[index]
-
+        app.main_window.select_ranges_list_object.redraw_range_list()
 
         atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
@@ -195,6 +199,7 @@ class SelectedResiduesList(QtGui.QListWidget):
         print(atom_val_list_out)
         app.main_window.reply_log_object.append("full chosen atoms list:")
         app.main_window.reply_log_object.append(str(atom_val_list_out))
+        
 
         # print and save the atom values by pressing 'p'
         if event.key() == QtCore.Qt.Key_P:

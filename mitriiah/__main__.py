@@ -93,7 +93,12 @@ with open(app.args.rmsf_filename) as rmsf:
 with open(app.args.my_gro_filename) as gro_file:
 
     for line in gro_file:
-        
+
+        first_part = line[:15]
+        rest_of_line = line[15:]
+
+        line = str.join(' ', (first_part, rest_of_line))
+
         cols = line.split()
 
         # if len(cols) == 9: #number of cols in gro file. will depend if pre or post sim (6 or 9 cols)
@@ -113,6 +118,9 @@ with open(app.args.my_gro_filename) as gro_file:
             app.gro_residue_name.append(str(items[1]))
             app.gro_atom_name.append(str(cols[1]))
             app.gro_atom_number.append(int(cols[2]))
+
+
+
 
     app.min_res = min(app.gro_residue_val)
     app.max_res = max(app.gro_residue_val)

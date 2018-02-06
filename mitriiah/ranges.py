@@ -18,7 +18,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
         for range_name, range_list in app.ranges_list.items():
 
-            range_item = QtGui.QListWidgetItem("range : " " %s " "to" " %s " " | " "atoms selected: " " %s"  % ( range_list['from_val'], range_list['to_val'], range_list['current_atoms'] ))
+            range_item = QtGui.QListWidgetItem("range : " " %s " "-" " %s " " | " "atoms selected: " " %s"  % ( range_list['from_val'], range_list['to_val'], range_list['current_atoms'] ))
 
             range_item.my_range = {'range_number': range_name}
 
@@ -262,33 +262,38 @@ class SelectedRangeList(QtGui.QListWidget):
     def keyPressEvent(self, event):
 
         super(SelectedRangeList, self).keyPressEvent(event)
+
+        for_deleting = []
+
         if event.key() == QtCore.Qt.Key_Delete:
 
             for item in self.selectedItems():
                
                 # update the selected ranges list when deleting
-                for range_name, range_list in list(app.ranges_list.items()):
+                for range_name, range_list in app.ranges_list.items():
 
                     if range_name == item.my_range['range_number']:
+
+                        for atom_name in app.ranges_list[range_name]['range']:
+
+                            for_deleting.append(atom_name['atomval'])
+
+                            for index, val in enumerate(app.atom_val_list):
+
+                                for point in for_deleting:
+                                    print(point)
+                            
+                                    if point == val:
+                                        del app.atom_val_list[index]
+
+                                print(app.atom_val_list)
+                        
+                        # print(for_deleting)
                         del app.ranges_list[range_name]
                 
 
                 self.takeItem(self.row(item)) # delete the row visually
 
-
-                # clear corresponding atoms out of memory
-                temp_atom_list = []
-
-                for index, atom in enumerate(app.atom_val_list):
-
-                    for range_name, range_list in list(app.ranges_list.items()):
-
-                        for atom in app.ranges_list[range_name]['range']:
-                        
-                            if atom == atom['atomval']:
-                                temp_atom_list.append(app.atom_val_list[index])
-
-                app.atom_val_list = temp_atom_list
 
             atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
@@ -301,6 +306,7 @@ class SelectedRangeList(QtGui.QListWidget):
 
         self.redraw_range_list()
         app.main_window.graph_object.redraw_graph()
+        app.main_window.selected_residues_list_object.redraw_res_list()
 
         # atom numbers printing and saving shortcut
         if event.key() == QtCore.Qt.Key_P:
