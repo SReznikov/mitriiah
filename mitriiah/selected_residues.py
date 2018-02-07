@@ -61,16 +61,32 @@ class SelectedResiduesList(QtGui.QListWidget):
                             app.atom_val_list = sorted(app.atom_val_list, key=lambda item: item)
 
 
-        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+                # for range_name, range_list in app.ranges_list.items():
 
-        print('[your_chosen_atoms]')
-        print(atom_val_list_out)
-        app.main_window.reply_log_object.append("full chosen atoms list:")
-        app.main_window.reply_log_object.append(str(atom_val_list_out))
+                #     if range_name == item['resval']:
+
+                #         for atom_name in app.ranges_list[range_name]['range']:
+
+                #             # for atom in app.default_atoms:
+
+                #             if atom_name['atomname'] == atom:
+
+                #                 if not [point for point in app.atom_val_list if point == atom_name['atomval']]:
+                #                             app.atom_val_list.append( atom_name['atomval'])
+                #                             app.atom_val_list = sorted(app.atom_val_list, key=lambda item: atom_name['atomval'])
+                                   
+                #                 if not [point for point in app.ranges_list[range_name]["current_atoms"] if point == atom_name['atomname']]:
+
+
+                #                     app.ranges_list[range_name]["current_atoms"].append(atom_name['atomname'])
+
+
+        app.atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
         app.main_window.select_ranges_list_object.redraw_range_list()
+        app.log_update()
 
     # add all atoms
     def all_button_clicked(self):
@@ -82,16 +98,12 @@ class SelectedResiduesList(QtGui.QListWidget):
                     app.atom_val_list = sorted(app.atom_val_list, key=lambda item: item)
 
 
-        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-
-        print('[your_chosen_atoms]')
-        print(atom_val_list_out)
-        app.main_window.reply_log_object.append("full chosen atoms list:")
-        app.main_window.reply_log_object.append(str(atom_val_list_out))
+        app.atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
         app.main_window.select_ranges_list_object.redraw_range_list()
+        app.log_update()
 
 
     # delete default atoms
@@ -115,17 +127,12 @@ class SelectedResiduesList(QtGui.QListWidget):
 
 
 
-        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-
-
-        print('[your_chosen_atoms]')
-        print(atom_val_list_out)
-        app.main_window.reply_log_object.append("full chosen atoms list:")
-        app.main_window.reply_log_object.append(str(atom_val_list_out))
+        app.atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
         app.main_window.select_ranges_list_object.redraw_range_list()
+        app.log_update()
 
 
     # delete all atoms
@@ -144,16 +151,12 @@ class SelectedResiduesList(QtGui.QListWidget):
                         del app.atom_val_list[index]
 
 
-        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-
-        print('[your_chosen_atoms]')
-        print(atom_val_list_out)
-        app.main_window.reply_log_object.append("full chosen atoms list:")
-        app.main_window.reply_log_object.append(str(atom_val_list_out))
+        app.atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
 
         app.main_window.selected_residues_list_object.redraw_res_list()
         app.main_window.select_ranges_list_object.redraw_range_list()
+        app.log_update()
         
     # define keyboard actions
     def keyPressEvent(self, event):
@@ -171,14 +174,13 @@ class SelectedResiduesList(QtGui.QListWidget):
                     app.atom_val_list.append( item.my_res_atom['atomval'] )
                     app.atom_val_list = sorted(app.atom_val_list, key=lambda item: item)
 
-        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+        app.atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+        
+
         app.main_window.select_ranges_list_object.redraw_range_list()
+        app.log_update()
         
-        print('[your_chosen_atoms]')
-        print(atom_val_list_out)
-        app.main_window.reply_log_object.append("full chosen atoms list:")
-        app.main_window.reply_log_object.append(str(atom_val_list_out))
-        
+       
 
         # delete desired atoms from the atom list by pressing 'b'
         if event.key() == QtCore.Qt.Key_B:
@@ -190,22 +192,19 @@ class SelectedResiduesList(QtGui.QListWidget):
                 for index, atm in enumerate(app.atom_val_list):
                     if( atm == item.my_res_atom['atomval']):
                         del app.atom_val_list[index]
-        app.main_window.select_ranges_list_object.redraw_range_list()
-
-        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
-
         
-        print('[your_chosen_atoms]')
-        print(atom_val_list_out)
-        app.main_window.reply_log_object.append("full chosen atoms list:")
-        app.main_window.reply_log_object.append(str(atom_val_list_out))
+
+        app.atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+
+        app.main_window.select_ranges_list_object.redraw_range_list()
+        app.log_update()
         
 
         # print and save the atom values by pressing 'p'
         if event.key() == QtCore.Qt.Key_P:
             
-            print('Saved atom list from atom selection window')
-            app.main_window.reply_log_object.append("Saved atom list from atom selection window")
+            print('Saved atom list')
+            app.main_window.reply_log_object.append("Saved atom list")
 
             app.saving_and_output()
 

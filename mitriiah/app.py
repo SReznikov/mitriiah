@@ -20,6 +20,7 @@ gro_residue_val, gro_residue_name, gro_atom_name, gro_atom_number = [], [], [], 
 selected_residues = [] # residue name+value and atom name+value derived from selected_points
 
 atom_val_list = [] # list of atom numbers obtained from user selection
+atom_val_list_out = ()
 
 ## ranges
 ranges_list = {} # dict containing all the chosen ranges
@@ -45,6 +46,7 @@ def add_point_by_mouse(event):
     global selected_residues
     global x_a_res
     global y_a_rmsf
+    global ranges_list
 
     if event.button == 3: # right mouse button (1 = LMB, 2 = wheel, 3 = RMB)
 
@@ -73,24 +75,43 @@ def add_point_by_mouse(event):
 
         # add the selected lowest point to the list of selected points   
         if not [point for point in selected_points if point['x'] == x_of_lowest_point]:
-            if x_of_lowest_point != None and lowest_point != None: 
-                selected_points.append({"x":x_of_lowest_point, "y":lowest_point}) # add our lowest point to list of selected points only if residue number isn't already present in the list
-                selected_points = sorted(selected_points, key=lambda item: item["x"])
 
-                # for every added point, add corresponding data from .gro file:
-                for index, select_res in enumerate(gro_residue_val):
-                    if select_res == x_of_lowest_point: # check if residue number of our point is in .gro and add other variables to the list
+            z = 0
 
-                        selected_residues.append(
-                            {
-                                "resval":gro_residue_val[index], 
-                                "resname":gro_residue_name[index], 
-                                "atomname":gro_atom_name[index], 
-                                "atomval":gro_atom_number[index]
-                            }
-                        )
-                        selected_residues = sorted(selected_residues, key=lambda item: item["atomval"])
+            for a_range in ranges_list:
+
+                if x_of_lowest_point < ranges_list[a_range]["from_val"] or x_of_lowest_point > ranges_list[a_range]["to_val"]:
                     
+                    z = 0
+
+                else:
+            
+                    z = 1
+                    print("Error: Residue(s) already in another range")
+                    main_window.reply_log_object.append("Error: Residue(s) already in another range")
+                    break
+
+            if z == 0:
+                
+
+                if x_of_lowest_point != None and lowest_point != None: 
+                    selected_points.append({"x":x_of_lowest_point, "y":lowest_point}) # add our lowest point to list of selected points only if residue number isn't already present in the list
+                    selected_points = sorted(selected_points, key=lambda item: item["x"])
+
+                    # for every added point, add corresponding data from .gro file:
+                    for index, select_res in enumerate(gro_residue_val):
+                        if select_res == x_of_lowest_point: # check if residue number of our point is in .gro and add other variables to the list
+
+                            selected_residues.append(
+                                {
+                                    "resval":gro_residue_val[index], 
+                                    "resname":gro_residue_name[index], 
+                                    "atomname":gro_atom_name[index], 
+                                    "atomval":gro_atom_number[index]
+                                }
+                            )
+                            selected_residues = sorted(selected_residues, key=lambda item: item["atomval"])
+                        
 
         # add selected_points (residue value and rmsf value) to the selected_points_list (also displayed)
         
@@ -217,3 +238,16 @@ def open_variables():
     main_window.reply_log_object.append("previous session loaded")
 
 
+def log_update():
+
+    print('[your_chosen_atoms]')
+    if atom_val_list_out:
+        print(atom_val_list_out)
+    else:
+        print("None")    
+        
+    main_window.reply_log_object.append("full chosen atoms list:")
+    if atom_val_list_out:
+        main_window.reply_log_object.append(str(atom_val_list_out))
+    else:
+        main_window.reply_log_object.append("None")

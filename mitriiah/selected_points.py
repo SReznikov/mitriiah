@@ -60,14 +60,12 @@ class SelectedPointsList(QtGui.QListWidget):
 
                                     del app.atom_val_list[index]
 
-
-
             
                 for point in for_deleting:
                     for index, atoms in enumerate(app.selected_residues):
                         if atoms['atomval'] == point['atomval']:
                             del app.selected_residues[index]
-                            print(app.selected_residues)
+
 
                         # for index, atoms in enumerate(app.selected_residues):
                         #     for point in for_deleting:
@@ -142,17 +140,14 @@ class SelectedPointsList(QtGui.QListWidget):
 
 
 
-        atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+        app.atom_val_list_out = (' '.join(str(e) for e in app.atom_val_list)) # exclude brackets, keep the list sorted in ascending order
 
 
-        print('[your_chosen_atoms]')
-        print(atom_val_list_out)
-        app.main_window.reply_log_object.append("full chosen atoms list:")
-        app.main_window.reply_log_object.append(str(atom_val_list_out))
 
         app.main_window.graph_object.redraw_graph()
         app.main_window.selected_residues_list_object.redraw_res_list()
         app.main_window.select_ranges_list_object.redraw_range_list()
+        app.log_update()
 
         
         # atom numbers printing and saving shortcut

@@ -146,7 +146,7 @@ def main():
     app.main_window.move(50, 60)
     app.main_window.resize(1500, 1000)
     app.main_window.setWindowTitle("mitriiah")
-    app.main_window.setWindowIcon(QtGui.QIcon(".hamster.jpg"))
+    app.main_window.setWindowIcon(QtGui.QIcon("hamster.jpg"))
 
     app.main_window.show()
     app.main_window.raise_()
@@ -154,7 +154,7 @@ def main():
     sys.exit(app.qapp.exec_())
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+main()      
 
 

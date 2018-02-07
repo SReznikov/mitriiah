@@ -168,6 +168,7 @@ class MainGuiWindow(QtGui.QWidget):
 
             app.ranges_list = OrderedDict(sorted(app.ranges_list.items(), key = lambda x: x[1]["from_val"]))
             app.n += 1 
+            
             app.main_window.graph_object.redraw_graph()
 
         if len(from_input) < 1 or len(to_input) < 1:
@@ -184,33 +185,53 @@ class MainGuiWindow(QtGui.QWidget):
 
             else:
 
-                if to_input < from_input:
+                if int(to_input) < int(from_input):
                     print("Error: end of range value is smaller than starting value")
                     self.reply_log_object.append("Error: end of range value is smaller than starting value")
 
                 else:
 
-                    if not app.ranges_list:
-                        adding_range()
+                    y = 0
 
-                    else:
-                        x = 0
+                    for point in app.selected_residues:
+                        if point['resval'] < int(from_input) or point['resval'] > int(to_input):
+                            y = 0
 
-                        for a_range in app.ranges_list:
+                        else:
+                        
+                            y = 1
+                            print("Error: Residue(s) already added")
+                            self.reply_log_object.append("Error: Residue(s) already added")
+                            break
 
-                            if int(to_input) < app.ranges_list[a_range]["from_val"] or int(from_input) > app.ranges_list[a_range]["to_val"]:
-                                
-                                x = 0
+                    if y == 0:
 
-                            else:
-      
-                                x = 1
-                                print("Error: Residue(s) already in another range")
-                                self.reply_log_object.append("Error: Residue(s) already in another range")
-                                break
 
-                        if x == 0:
+                        if not app.ranges_list:
                             adding_range()
+
+                        else:
+                            x = 0
+
+                            for a_range in app.ranges_list:
+
+                                if int(to_input) < app.ranges_list[a_range]["from_val"] or int(from_input) > app.ranges_list[a_range]["to_val"]:
+                                    
+                                    x = 0
+
+                                else:
+          
+                                    x = 1
+                                    print("Error: Residue(s) already in another range")
+                                    self.reply_log_object.append("Error: Residue(s) already in another range")
+                                    break
+
+                            if x == 0:
+                                adding_range()
+
+
+
+
 
 
 
@@ -703,8 +724,8 @@ class MainGuiWindow(QtGui.QWidget):
         # atom output shortcut
         if event.key() == QtCore.Qt.Key_P:
             
-            print('Saved atom list from Main Window')
-            app.main_window.reply_log_object.append("Saved atom list from Graph-Window")
+            print('Saved atom list')
+            app.main_window.reply_log_object.append("Saved atom list")
 
             app.saving_and_output()
 

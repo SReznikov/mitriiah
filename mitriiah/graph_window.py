@@ -53,8 +53,11 @@ class GraphWindow(QtGui.QDialog):
         ax = self.figure.add_subplot(111)
         self.ax = ax
 
+        ax.set_ylim(bottom = 0)
+
         # use the selecter on graph
         cid = self.figure.canvas.mpl_connect('button_press_event', app.add_point_by_mouse)
+        
         self.redraw_graph()
 
     
@@ -64,11 +67,15 @@ class GraphWindow(QtGui.QDialog):
         self.ax.clear() # discards the old graph
 
         self.ax.plot(app.x_a_res,app.y_a_rmsf, c='k') # plot the rmsf graph
+        self.ax.set_ylim(bottom = 0)
 
 
         # plot every selected point
         for point in app.selected_points:
             self.ax.plot(point['x'],point['y'], c='r', marker='o')
+
+
+
 
         # plot every range
         for range_name, range_list in app.ranges_list.items():
@@ -78,6 +85,13 @@ class GraphWindow(QtGui.QDialog):
             t = (max(app.y_a_rmsf)) + 0.25
 
             self.ax.add_patch(patches.Rectangle((x, -0.1), w, t, alpha = 0.2, facecolor = '#ffaa00'))
+
+            for index, val in enumerate(app.x_a_res):
+                if val == x:
+                    y = app.y_a_rmsf[index]
+
+                    if w == 0:
+                        self.ax.plot(app.ranges_list[range_name]['from_val'],y, c='#ffaa00', marker='o')
 
         self.ax.set_title("RMSF")    
         self.ax.set_xlabel('Residue number')
