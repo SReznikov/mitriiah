@@ -125,19 +125,24 @@ def add_point_by_mouse(event):
 
 # save the chosen atom numbers to a new .ndx file and generate a posres.itp file. Also prints the values in the terminal. 
 def saving_and_output():
+
+    atom_val_list_2 = sorted(int(e) for e in atom_val_list)
+
+    atom_val_list_out_2 = (' '.join(str(e) for e in atom_val_list_2)) # exclude brackets, keep the list sorted in ascending order
+
     #save index
-    atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
+    # atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
     gro_filename = args.my_gro_filename
 
     print('[your_chosen_atoms]')
     print(atom_val_list_out)
     main_window.reply_log_object.append("[your_chosen_atoms]")
-    main_window.reply_log_object.append(atom_val_list_out)
+    main_window.reply_log_object.append(atom_val_list_out_2)
 
     with open(gro_filename[:-4] + "_atoms_index.ndx", 'wt') as out:
         out.write( "[ chosen_atoms ]" + '\n')
         out.write( '\n' )
-        out.write((atom_val_list_out) + '\n')
+        out.write((atom_val_list_out_2) + '\n')
      
     with open(gro_filename[:-4] + "_posres.itp", 'w') as out:
         out.write( "[ position_restraints ]" + '\n')
@@ -161,7 +166,7 @@ def saving_and_output():
 
         # create a new renumbered selected atom list
         for renum, atmnum in posre_dict:
-            for atom_val in atom_val_list:
+            for atom_val in atom_val_list_2:
                 if atom_val == atmnum:
                     posre_list.append(renum)
 
@@ -199,6 +204,7 @@ def save_variables():
     saved_vars['gro_atom_number '] = gro_atom_number 
     saved_vars['selected_residues'] = selected_residues 
     saved_vars['atom_val_list'] = atom_val_list 
+    saved_vars['atom_val_list_2'] = atom_val_list_2 
     saved_vars['ranges_list'] = ranges_list 
     saved_vars['n'] = n 
 
@@ -240,14 +246,20 @@ def open_variables():
 
 def log_update():
 
+    atom_val_list_2 = sorted(int(e) for e in atom_val_list)
+
+    atom_val_list_out_2 = (' '.join(str(e) for e in atom_val_list_2)) # exclude brackets, keep the list sorted in ascending order
+
     print('[your_chosen_atoms]')
     if atom_val_list_out:
-        print(atom_val_list_out)
+
+        print(atom_val_list_out_2)
+
     else:
         print("None")    
-        
+
     main_window.reply_log_object.append("full chosen atoms list:")
     if atom_val_list_out:
-        main_window.reply_log_object.append(str(atom_val_list_out))
+        main_window.reply_log_object.append(str(atom_val_list_out_2))
     else:
         main_window.reply_log_object.append("None")
