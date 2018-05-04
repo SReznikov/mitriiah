@@ -3,8 +3,13 @@ import shelve
 main_window = None
 args = None
 
+chain_num = 0 
+chain_list = {} # list of chains from the gro file
+
+
 # Data from rmsf.xvg file
 x_a_res, y_a_rmsf = [], [] 
+
 
 # List of selected points
 selected_points = [] # residue value and rmsf value from graph selection
@@ -14,7 +19,6 @@ selected_points_y = [] # rmsf value
 
 # List of values from gro_file
 gro_residue_val, gro_residue_name, gro_atom_name, gro_atom_number = [], [], [], []
-
 
 ##RMSF
 selected_residues = [] # residue name+value and atom name+value derived from selected_points
@@ -30,6 +34,7 @@ ranges_list = {} # dict containing all the chosen ranges
 # max_res = None
 
 n = 1 # range counter
+
 
 to_vals = []
 from_vals = []
@@ -47,6 +52,7 @@ def add_point_by_mouse(event):
     global x_a_res
     global y_a_rmsf
     global ranges_list
+    global chain_list
 
     if event.button == 3: # right mouse button (1 = LMB, 2 = wheel, 3 = RMB)
 
@@ -61,16 +67,28 @@ def add_point_by_mouse(event):
 
 
         # check if point is within range, set lowest point. 
-        for index, curr_point in enumerate(x_a_res):
+        # for index, curr_point in enumerate(x_a_res):
+        for index, curr_point in enumerate(chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"]):
+            
             if curr_point > mx_l and curr_point < mx_h: # is it within the range?
                 
                 if lowest_point is None: # did we set the lowest point?
-                    lowest_point = y_a_rmsf[index] # just use the first one
-                    x_of_lowest_point = x_a_res[index]
+                    # lowest_point = y_a_rmsf[index] # just use the first one
+                    lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index]
+                    # x_of_lowest_point = x_a_res[index]
+                    x_of_lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"][index]
+
+                    
                 
-                if y_a_rmsf[index] < lowest_point: # look for the lowest point
-                    lowest_point = y_a_rmsf[index]
-                    x_of_lowest_point = x_a_res[index]
+                # if y_a_rmsf[index] < lowest_point: # look for the lowest point
+                #     lowest_point = y_a_rmsf[index]
+                #     x_of_lowest_point = x_a_res[index]
+
+
+
+                if chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index] < lowest_point: # look for the lowest point
+                    lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index]
+                    x_of_lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"][index]
 
 
         # add the selected lowest point to the list of selected points   
@@ -130,6 +148,13 @@ def saving_and_output():
 
     atom_val_list_out_2 = (' '.join(str(e) for e in atom_val_list_2)) # exclude brackets, keep the list sorted in ascending order
 
+    atom_val_list_split = atom_val_list_out_2.split(' ')
+
+    for s, value in enumerate(atom_val_list_split):
+        if s != 0 and s % 14 == 0:
+            atom_val_list_split[s] = value + '\n'
+
+    atom_val_list_split_2 = (' '.join(atom_val_list_split))
     #save index
     # atom_val_list_out = (' '.join(str(e) for e in atom_val_list)) # exclude brackets, keep the list sorted in ascending order
     gro_filename = args.my_gro_filename
@@ -142,7 +167,7 @@ def saving_and_output():
     with open(gro_filename[:-4] + "_atoms_index.ndx", 'wt') as out:
         out.write( "[ chosen_atoms ]" + '\n')
         out.write( '\n' )
-        out.write((atom_val_list_out_2) + '\n')
+        out.write((atom_val_list_split_2) + '\n')
      
     with open(gro_filename[:-4] + "_posres.itp", 'w') as out:
         out.write( "[ position_restraints ]" + '\n')
@@ -191,6 +216,10 @@ def saving_and_output():
 
 
 def save_variables():
+    atom_val_list_2 = sorted(int(e) for e in atom_val_list)
+
+    atom_val_list_out_2 = (' '.join(str(e) for e in atom_val_list_2)) # exclude brackets, keep the list sorted in ascending order
+
     
     saved_vars = {}
     saved_vars['x_a_res'] = x_a_res

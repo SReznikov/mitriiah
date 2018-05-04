@@ -66,7 +66,11 @@ class GraphWindow(QtGui.QDialog):
 
         self.ax.clear() # discards the old graph
 
-        self.ax.plot(app.x_a_res,app.y_a_rmsf, c='k') # plot the rmsf graph
+        # self.ax.plot(app.x_a_res,app.y_a_rmsf, c='k') # plot the rmsf graph
+
+
+        self.ax.plot(app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"],app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"], c='k')
+
         self.ax.set_ylim(bottom = 0)
 
 
@@ -82,13 +86,19 @@ class GraphWindow(QtGui.QDialog):
 
             x = app.ranges_list[range_name]['from_val']
             w = (app.ranges_list[range_name]['to_val']) - (app.ranges_list[range_name]['from_val'])
-            t = (max(app.y_a_rmsf)) + 0.25
+            # t = (max(app.y_a_rmsf)) + 0.25
+            t = (max(app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"])) + 0.25
+            
 
             self.ax.add_patch(patches.Rectangle((x, -0.1), w, t, alpha = 0.2, facecolor = '#ffaa00'))
 
-            for index, val in enumerate(app.x_a_res):
+            # for index, val in enumerate(app.x_a_res):
+            for index, val in enumerate(app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"]):
+                
                 if val == x:
-                    y = app.y_a_rmsf[index]
+                    # y = app.y_a_rmsf[index]
+                    y = app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"][index]
+                    
 
                     if w == 0:
                         self.ax.plot(app.ranges_list[range_name]['from_val'],y, c='#ffaa00', marker='o')

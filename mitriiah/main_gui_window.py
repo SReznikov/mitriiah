@@ -22,6 +22,9 @@ class MainGuiWindow(QtGui.QWidget):
         #classes
 
         graph_object = GraphWindow(app.x_a_res, app.y_a_rmsf)
+
+        # graph_object = GraphWindow(app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"], app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"])
+        
         self.graph_object = graph_object
 
 

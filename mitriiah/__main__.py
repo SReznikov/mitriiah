@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+
 import sys
 import os
 import argparse
@@ -29,13 +31,13 @@ import shelve
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-# from matplotlib.backends.qt_compat import QtCore, QtGui, is_pyqt5
-# if is_pyqt5():
-#     from matplotlib.backends.backend_qt5agg import (
-#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
-# else:
-#     from matplotlib.backends.backend_qt4agg import (
-#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+# # from matplotlib.backends.qt_compat import QtCore, QtGui, is_pyqt5
+# # if is_pyqt5():
+# #     from matplotlib.backends.backend_qt5agg import (
+# #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+# # else:
+# #     from matplotlib.backends.backend_qt4agg import (
+# #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 
 
@@ -75,9 +77,18 @@ parser.add_argument("-c", "--coords", dest = 'my_gro_filename', default = "prote
 
 app.args = parser.parse_args()
 
+app.chain_list["chain%s" % app.chain_num] = {}
 
 # Open the rmsf.xvg file and assign residue and rmsf variables
 with open(app.args.rmsf_filename) as rmsf:
+
+
+
+    
+    app.chain_list["chain%s" % app.chain_num]["rmsf_data"] = {}
+    app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"] = []
+    app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"] = []
+
 
     rmsf_lines = [line.strip() for line in rmsf if not line.startswith(('#', '@'))]
 
@@ -86,14 +97,38 @@ with open(app.args.rmsf_filename) as rmsf:
         cols = line.split()
 
         if len(cols) == 2:
-            app.x_a_res.append(float(cols[0]))
-            app.y_a_rmsf.append(float(cols[1]))
+            # app.x_a_res.append(float(cols[0]))
+            # app.y_a_rmsf.append(float(cols[1]))
+
+
+
+
+            app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"].append(float(cols[0]))
+            app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"].append(float(cols[1]))
+                
+    print(app.chain_list.keys())    
+    print(app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"])
+    # print(app.x_a_res)
+
+
+    x_a_res = app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"]
+    y_a_rmsf = app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"]
+
+    # app.chain_num += 1 
+
 
 # Open the given .gro file and assign needed variables (residue/atom values and names)
 with open(app.args.my_gro_filename) as gro_file:
 
-    for line in gro_file:
 
+    app.chain_list["chain%s" % app.chain_num]["gro_data"] = {}
+    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_val"] = []
+    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_name"] = []
+    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_name"] = []
+    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_number"] = []
+
+    for line in gro_file:
+        #separate the columns for big files
         first_part = line[:15]
         rest_of_line = line[15:]
 
@@ -114,13 +149,20 @@ with open(app.args.my_gro_filename) as gro_file:
                     val_col = items[0]
                     res_col = items[1]
 
-            app.gro_residue_val.append(int(items[0]))
-            app.gro_residue_name.append(str(items[1]))
-            app.gro_atom_name.append(str(cols[1]))
-            app.gro_atom_number.append(int(cols[2]))
+            # app.gro_residue_val.append(int(items[0]))
+            # app.gro_residue_name.append(str(items[1]))
+            # app.gro_atom_name.append(str(cols[1]))
+            # app.gro_atom_number.append(int(cols[2]))
 
+            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_val"].append(int(items[0]))
+            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_name"].append(str(items[1]))
+            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_name"].append(str(cols[1]))
+            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_number"].append(int(cols[2]))
 
-
+    app.gro_residue_val = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_val"]
+    app.gro_residue_name = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_name"]
+    app.gro_atom_name = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_name"]
+    app.gro_atom_number = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_number"]
 
     app.min_res = min(app.gro_residue_val)
     app.max_res = max(app.gro_residue_val)
@@ -128,6 +170,7 @@ with open(app.args.my_gro_filename) as gro_file:
     app.to_vals.append(str(app.max_res + 1))
     app.from_vals.append(str(app.min_res - 1))
    
+
    
 
 
