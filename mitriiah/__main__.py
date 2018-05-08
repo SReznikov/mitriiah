@@ -172,7 +172,8 @@ with open(app.args.my_gro_filename) as gro_file:
    
 
    
-
+def chain_choice():
+    print("choose a chain")
 
 def signal_handler(signal, frame):
     sys.exit(0)
@@ -199,6 +200,7 @@ def main():
 
 
 # if __name__ == '__main__':
+chain_choice()
 main()      
 
 
