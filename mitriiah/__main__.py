@@ -23,6 +23,7 @@ import sys
 import os
 import argparse
 import signal
+import itertools 
 
 from PyQt4 import QtCore, QtGui
 import re
@@ -77,18 +78,12 @@ parser.add_argument("-c", "--coords", dest = 'my_gro_filename', default = "prote
 
 app.args = parser.parse_args()
 
-app.chain_list["chain%s" % app.chain_num] = {}
-
 # Open the rmsf.xvg file and assign residue and rmsf variables
 with open(app.args.rmsf_filename) as rmsf:
 
-
-
-    
-    app.chain_list["chain%s" % app.chain_num]["rmsf_data"] = {}
-    app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"] = []
-    app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"] = []
-
+    index_rmsf_counter = 0
+    temp_x_a_res = []
+    temp_y_a_rmsf = []
 
     rmsf_lines = [line.strip() for line in rmsf if not line.startswith(('#', '@'))]
 
@@ -97,36 +92,25 @@ with open(app.args.rmsf_filename) as rmsf:
         cols = line.split()
 
         if len(cols) == 2:
-            # app.x_a_res.append(float(cols[0]))
-            # app.y_a_rmsf.append(float(cols[1]))
 
-
-
-
-            app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"].append(float(cols[0]))
-            app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"].append(float(cols[1]))
-                
-    print(app.chain_list.keys())    
-    print(app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"])
-    # print(app.x_a_res)
-
-
-    x_a_res = app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["x_a_res"]
-    y_a_rmsf = app.chain_list["chain%s" % app.chain_num]["rmsf_data"]["y_a_rmsf"]
-
-    # app.chain_num += 1 
+            temp_x_a_res.append(float(cols[0]))
+            temp_y_a_rmsf.append(float(cols[1]))
 
 
 # Open the given .gro file and assign needed variables (residue/atom values and names)
 with open(app.args.my_gro_filename) as gro_file:
 
+    temp_gro_residue_val = []
+    temp_gro_residue_name = []
+    temp_gro_atom_name = []
+    temp_gro_atom_number = []
 
-    app.chain_list["chain%s" % app.chain_num]["gro_data"] = {}
-    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_val"] = []
-    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_name"] = []
-    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_name"] = []
-    app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_number"] = []
+    prev_item = 0
+    current_item = 0
+    index_counter = 0
 
+
+    # load the complex
     for line in gro_file:
         #separate the columns for big files
         first_part = line[:15]
@@ -144,36 +128,153 @@ with open(app.args.my_gro_filename) as gro_file:
             match = re.match(r"([0-9]+)([a-zA-Z]+)", res_col, re.I)
             if match:
                 items = match.groups()
-                
+
                 if len(items) == 2:
                     val_col = items[0]
                     res_col = items[1]
 
-            # app.gro_residue_val.append(int(items[0]))
-            # app.gro_residue_name.append(str(items[1]))
-            # app.gro_atom_name.append(str(cols[1]))
-            # app.gro_atom_number.append(int(cols[2]))
+            temp_gro_residue_val.append(int(items[0]))
+            temp_gro_residue_name.append(str(items[1]))
+            temp_gro_atom_name.append(str(cols[1]))
+            temp_gro_atom_number.append(int(cols[2]))
 
-            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_val"].append(int(items[0]))
-            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_name"].append(str(items[1]))
-            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_name"].append(str(cols[1]))
-            app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_number"].append(int(cols[2]))
 
-    app.gro_residue_val = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_val"]
-    app.gro_residue_name = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_residue_name"]
-    app.gro_atom_name = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_name"]
-    app.gro_atom_number = app.chain_list["chain%s" % app.chain_num]["gro_data"]["gro_atom_number"]
+ongoing_atom_list = []
 
-    app.min_res = min(app.gro_residue_val)
-    app.max_res = max(app.gro_residue_val)
+def chain_splitter():
+    global prev_item
+    global current_item
+    global index_counter
+    global index_rmsf_counter
+    global temp_x_a_res
+    global temp_y_a_rmsf
+    global ongoing_atom_list
 
-    app.to_vals.append(str(app.max_res + 1))
-    app.from_vals.append(str(app.min_res - 1))
-   
 
-   
-def chain_choice():
-    print("choose a chain")
+    temp_list = []
+    temp_rmsf_list = []
+    min_max_vals_list = []
+    rmsf_vals_list = []
+    resvalues = []
+
+
+    for rv, rn, an, av in zip(temp_gro_residue_val[index_counter::], temp_gro_residue_name[index_counter::], temp_gro_atom_name[index_counter::], temp_gro_atom_number[index_counter::]):
+
+        current_item = rv
+        current_atom = av
+
+        diff = abs(current_item - prev_item)
+
+
+        if av not in ongoing_atom_list:
+
+            if diff == 1 or diff == 0:
+
+                app.chain_list["chain_%s" % app.chain_num]["chain_num"] = app.chain_num
+
+                temp_list.append( {
+                        "resval":rv,
+                        "resname":rn,
+                        "atomname":an,
+                        "atomval":av
+                         } )
+
+                ongoing_atom_list.append(av)
+
+                prev_item = rv
+                index_counter += 1
+
+
+                app.chain_list["chain_%s" % app.chain_num]["gro_data"] = temp_list
+
+
+                for rmsf_res, rmsf_val in zip(temp_x_a_res[index_rmsf_counter::], temp_y_a_rmsf[index_rmsf_counter::]):
+
+                    if rmsf_res == rv:
+
+                        temp_rmsf_list.append( {
+                                "rmsf_res":rmsf_res,
+                                "rmsf_val":rmsf_val
+                                 } )
+
+                        index_rmsf_counter += 1
+
+                        resvalues.append(rmsf_res)
+
+                        app.chain_list["chain_%s" % app.chain_num]["rmsf_data"] = temp_rmsf_list
+                        app.chain_list["chain_%s" % app.chain_num]["values_r"] = resvalues
+
+                        min_max_vals_list.append(rmsf_res)
+
+                        app.chain_list["chain_%s" % app.chain_num]["min"] = min(app.chain_list["chain_%s" % app.chain_num]["values_r"])
+                        app.chain_list["chain_%s" % app.chain_num]["max"] = max(app.chain_list["chain_%s" % app.chain_num]["values_r"])
+
+
+
+            if diff > 1:
+
+                prev_item = current_item-1
+
+                app.chain_num += 1
+
+                min_max_vals_list = []
+
+                for n in temp_rmsf_list:
+
+                    rmsf_vals_list.append(n['rmsf_val'])
+
+                chain_splitter()
+                break
+
+
+def user_select():
+
+    for chain in range(app.chain_num+1):
+        if chain != 0:
+
+            app.chain_num = chain
+
+            first_res = app.chain_list["chain_%s" % app.chain_num]["min"]
+            last_res = app.chain_list["chain_%s" % app.chain_num]["max"]
+
+            print(chain,":", "chain %s" % chain, "- residues", first_res, "to", last_res)
+
+
+    chain_to_load = int(input("chain to load: "))
+
+    ## restrict the input
+    ## link it to the group (print the values from the selected group)
+
+    print("loading " + str(chain_to_load))
+
+
+    for chain in range(app.chain_num+1):
+
+        if chain != 0:
+
+            if app.chain_list["chain_%s" % chain]["chain_num"] == chain_to_load :
+
+                for line in app.chain_list["chain_%s" % chain_to_load]['gro_data']:
+                    # print(line["resval"])
+                    app.gro_residue_val.append(line["resval"])
+                    app.gro_residue_name.append(line["resname"])
+                    app.gro_atom_name.append(line["atomname"])
+                    app.gro_atom_number.append(line["atomval"] )
+
+                app.min_res = min(app.gro_residue_val)
+                app.max_res = max(app.gro_residue_val)
+
+                app.to_vals.append(str(app.max_res + 1))
+                app.from_vals.append(str(app.min_res - 1))
+
+
+                for line in app.chain_list["chain_%s" % chain_to_load]['rmsf_data']:
+                    app.x_a_res.append(line["rmsf_res"])
+                    app.y_a_rmsf.append(line["rmsf_val"])
+
+
+#######################
+
 
 def signal_handler(signal, frame):
     sys.exit(0)
@@ -200,7 +301,7 @@ def main():
 
 
 # if __name__ == '__main__':
-chain_choice()
-main()      
-
+chain_splitter()
+user_select()
+main()
 

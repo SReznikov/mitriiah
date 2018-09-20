@@ -62,6 +62,8 @@ class MainGuiWindow(QtGui.QWidget):
         # Layout of the program
         self.layouts()
 
+        # print(app.chain_list["chain_1"]["gro_data"])
+
     ######################    
     ## RMSF atom window ##
     ######################

@@ -1,15 +1,38 @@
 import shelve
+# import __main__ as main
 
 main_window = None
 args = None
 
-chain_num = 0 
-chain_list = {} # list of chains from the gro file
 
+chain_num = 0 
+chain_num_rmsf = 0
+chain_list = {} # list of chains from the gro file
+chain_list["chain_%s" % chain_num] = {}
+
+for i in range(15):
+    chain_list["chain_%s" % i] = {}
+
+
+
+chain_list["chain_%s" % chain_num]["rmsf_data"] = {}
+chain_list["chain_%s" % chain_num]["rmsf_data"]["rmsf_val"] = []
+chain_list["chain_%s" % chain_num]["rmsf_data"]["rmsf_res"] = []
+
+# chain_list["chain_%s" % chain_num] = {}
+chain_list["chain_%s" % chain_num]["gro_data"] = {}
+chain_list["chain_%s" % chain_num]["gro_data"]["resval"] = []
+chain_list["chain_%s" % chain_num]["gro_data"]["resname"] = []
+chain_list["chain_%s" % chain_num]["gro_data"]["atomval"] = []
+chain_list["chain_%s" % chain_num]["gro_data"]["atomname"] = []
+chain_list["chain_%s" % chain_num]["min"] = {}
+chain_list["chain_%s" % chain_num]["max"] = {}
+
+
+chosen_chain = 1
 
 # Data from rmsf.xvg file
 x_a_res, y_a_rmsf = [], [] 
-
 
 # List of selected points
 selected_points = [] # residue value and rmsf value from graph selection
@@ -19,6 +42,7 @@ selected_points_y = [] # rmsf value
 
 # List of values from gro_file
 gro_residue_val, gro_residue_name, gro_atom_name, gro_atom_number = [], [], [], []
+
 
 ##RMSF
 selected_residues = [] # residue name+value and atom name+value derived from selected_points
@@ -67,28 +91,28 @@ def add_point_by_mouse(event):
 
 
         # check if point is within range, set lowest point. 
-        # for index, curr_point in enumerate(x_a_res):
-        for index, curr_point in enumerate(chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"]):
+        for index, curr_point in enumerate(x_a_res):
+        # for index, curr_point in enumerate(chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"]):
             
             if curr_point > mx_l and curr_point < mx_h: # is it within the range?
                 
                 if lowest_point is None: # did we set the lowest point?
-                    # lowest_point = y_a_rmsf[index] # just use the first one
-                    lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index]
-                    # x_of_lowest_point = x_a_res[index]
-                    x_of_lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"][index]
+                    lowest_point = y_a_rmsf[index] # just use the first one
+                    # lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index]
+                    x_of_lowest_point = x_a_res[index]
+                    # x_of_lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"][index]
 
                     
                 
-                # if y_a_rmsf[index] < lowest_point: # look for the lowest point
-                #     lowest_point = y_a_rmsf[index]
-                #     x_of_lowest_point = x_a_res[index]
+                if y_a_rmsf[index] < lowest_point: # look for the lowest point
+                    lowest_point = y_a_rmsf[index]
+                    x_of_lowest_point = x_a_res[index]
 
 
 
-                if chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index] < lowest_point: # look for the lowest point
-                    lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index]
-                    x_of_lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"][index]
+                # if chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index] < lowest_point: # look for the lowest point
+                #     lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["y_a_rmsf"][index]
+                #     x_of_lowest_point = chain_list["chain%s" % chain_num]["rmsf_data"]["x_a_res"][index]
 
 
         # add the selected lowest point to the list of selected points   
